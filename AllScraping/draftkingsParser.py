@@ -18,7 +18,7 @@ class GameLine:
             self.cleaned_line_name = cleaned_line_name
             self.curr_set = int(curr_set) if curr_set else curr_set
             self.curr_game = int(curr_game) if curr_game else curr_game
-            self.curr_points = curr_points
+            self.curr_points = int(curr_points) if curr_points else curr_points
             self.total_points_in_match = total_points_in_match
             self.total_games_in_match = total_games_in_match
         except Exception as e:
@@ -71,8 +71,8 @@ class DraftkingsGameState:
                                 self.game_lines[bottom_offer['label']] = self.set_game_correct_score(bottom_offer['label'])
                             elif draftkings_cleaned_name == ['set', 'game', 'to', 'deuce']:
                                 self.game_lines[bottom_offer['label']] = self.set_game_to_deuce(bottom_offer['label'])
-                            elif draftkings_cleaned_name == ['set', 'race', 'to', 'games']:
-                                self.game_lines[bottom_offer['label']] = self.set_race_to_games(bottom_offer['label'])
+                            # elif draftkings_cleaned_name == ['set', 'race', 'to', 'games']: #this is a specific players race
+                            #     self.game_lines[bottom_offer['label']] = self.set_race_to_games(bottom_offer['label'])
                             elif draftkings_cleaned_name ==  ['score', 'after', 'games', 'set']:
                                 self.game_lines[bottom_offer['label']] = self.score_after_games_set(bottom_offer['label'])
                             else:
@@ -86,11 +86,11 @@ class DraftkingsGameState:
         curr_game = cleaned_draftkings_name_array[2]
         return GameLine(line_name = draftkings_raw_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None)
 
-    def set_race_to_games(self, draftkings_raw_name):
-        cleaned_draftkings_name_array = draftkings_raw_name.replace("|", "").replace("-", "").lower().split()
-        curr_set = cleaned_draftkings_name_array[1]
-        curr_game = cleaned_draftkings_name_array[4]
-        return GameLine(line_name = draftkings_raw_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None)
+    # def set_race_to_games(self, draftkings_raw_name):
+    #     cleaned_draftkings_name_array = draftkings_raw_name.replace("|", "").replace("-", "").lower().split()
+    #     curr_set = cleaned_draftkings_name_array[1]
+    #     curr_game = cleaned_draftkings_name_array[4]
+    #     return GameLine(line_name = draftkings_raw_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None)
 
     def set_game_to_deuce(self, draftkings_raw_name):
         cleaned_draftkings_name_array = draftkings_raw_name.replace("|", "").replace("-", "").lower().split()
@@ -125,8 +125,8 @@ class DraftkingsGameState:
         curr_set = cleaned_draftkings_name_array[1]
         curr_game = cleaned_draftkings_name_array[3]
         point_in_game = cleaned_draftkings_name_array[5] #['set', '1', 'game', '4', 'point', '3', 'winner'] 
-        #Not saving point_in_game because no data stored on the sofascore side quite yet
-        return GameLine(line_name = draftkings_raw_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None)
+        #added in points
+        return GameLine(line_name = draftkings_raw_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = point_in_game, total_points_in_match= None, total_games_in_match= None)
  
     def set_game_winner(self, draftkings_raw_name):
         cleaned_draftkings_name_array = draftkings_raw_name.replace("|", "").replace("-", "").lower().split()
@@ -157,9 +157,8 @@ def test_full_code(type):
     elif type == 'online':
         res = dk_main()
         timestamp, json_res = res['timestamp'], res['ans']
-        subfolder = f'draftkings/draftkings_{timestamp}' + '.json'
-    count = 0
 
+    count = 0
     print("Number of Games", len(json_res))
 
     for test_event in json_res:
@@ -220,8 +219,8 @@ def clean_event_name(json):
 
 
 if __name__ == "__main__":
-    # res = test_full_code('online')
-    res = test_full_code('local')
+    res = test_full_code('online')
+    # res = test_full_code('local')
     # print("random things")
     # for item in res:
     #     for attribute in (vars(res[item])):

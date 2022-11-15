@@ -168,4 +168,5 @@ if __name__ == "__main__":
     #test_local()
     #store something else on top
     # test_local()
+    sofascore_main()
     ingest_softscore_data()

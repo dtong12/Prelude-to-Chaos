@@ -81,20 +81,20 @@ class CaesarsGameState:
         #set_num =  [int(i) for i in cleaned_caesars_name_array[0].split() if i.isdigit()]
         #print("   ",cleaned_caesars_name_array, set_num)
         curr_set = int(cleaned_caesars_name_array[0][0])
-        return GameLine(line_name = None, cleaned_line_name= None, curr_set= curr_set, curr_game = None, curr_points = None, total_points_in_match= None, total_games_in_match= None)
+        return GameLine(line_name = caesars_raw_name, cleaned_line_name= None, curr_set= curr_set, curr_game = None, curr_points = None, total_points_in_match= None, total_games_in_match= None)
 
     def set_game_live(self, caesars_raw_name):
         cleaned_caesars_name_array = caesars_raw_name.replace("|", "").replace("-", "").split()
         #print("cleaned array ", cleaned_caesars_name_array)
         curr_set = int(cleaned_caesars_name_array[0][0])
         curr_game = int(cleaned_caesars_name_array[3])
-        return GameLine(line_name = None, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None)
+        return GameLine(line_name = caesars_raw_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None)
 
     def set_game(self, caesars_raw_name):
         cleaned_caesars_name_array = caesars_raw_name.replace("|", "").replace("-", "").split()
         curr_set = int(cleaned_caesars_name_array[0][0])
         curr_game = int(cleaned_caesars_name_array[-1][0])
-        return GameLine(line_name = None, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None)
+        return GameLine(line_name = caesars_raw_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None)
 
 # class GameLine:
 #     def __init__(self, line_name, cleaned_line_name, curr_set, curr_game, curr_points, total_points_in_match, total_games_in_match):

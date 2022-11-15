@@ -62,12 +62,11 @@ def get_softscore_live_games_ids():
     # for event in json_response['events']:
     #     print(event['customId'])
 
+    print("Gathering event_ids...")
     event_ids = []
     for event in json_response['events']:
-        print(event['id'])
         event_ids.append(event['id'])
-
-    print(event_ids)
+    print('Gathered event_ids', event_ids)
     return event_ids
 
 
@@ -94,8 +93,6 @@ def get_all_game_data(event_id):
         }
 
         response = requests.request("GET", url, headers=headers, data=payload)
-        # print(response.text)
-        #print(event_id, response.status_code)
         return json.loads(response.text)
 
     def point_by_point(event_id):
@@ -120,7 +117,6 @@ def get_all_game_data(event_id):
         }
 
         response = requests.request("GET", url, headers=headers, data=payload)
-        print(event_id, response.status_code)
         return json.loads(response.text)
 
 
@@ -146,7 +142,7 @@ def get_all_game_data(event_id):
         }
 
         response = requests.request("GET", url, headers=headers, data=payload)
-        print(event_id, response.status_code)
+        #print(event_id, response.status_code)
         return json.loads(response.text)
 
     return game_data(event_id), point_by_point(event_id), game_statistics(event_id)
@@ -155,6 +151,7 @@ def get_all_game_data(event_id):
 def sofascore_main():
     ans = collections.defaultdict(lambda: collections.defaultdict())
     event_ids = get_softscore_live_games_ids()
+    print("Gathering all API endpoints...")
     for event_id in event_ids:
         game_data, point_by_point, game_statistics = get_all_game_data(event_id)
         ans[event_id]['url'] = ''
@@ -164,14 +161,6 @@ def sofascore_main():
 
     with open('softscore_current_event.json', 'w') as f:
         json.dump(ans, f)
-    
-
-# class Sofascore:
-#     def __init__(self):
-#         print()
-
-#     def get_live_game_ids(self):
-#         print()
 
 
 if __name__ == "__main__":
