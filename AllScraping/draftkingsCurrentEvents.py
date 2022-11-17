@@ -20,8 +20,7 @@ def dk_main():
         if event_id not in ans: 
             ans[event_id] = {}
         ans[event_id]['url'] = tennis_prefix + event_id
-        ans[event_id]['json'] = get_event_data(event_id)
-    
+        ans[event_id]['json'] = get_event_data(event_id)    
     return {'timestamp': timestamp, 'ans': ans}
 
 

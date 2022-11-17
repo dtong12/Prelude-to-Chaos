@@ -93,18 +93,10 @@ class CaesarsGameState:
     def set_game(self, caesars_raw_name):
         cleaned_caesars_name_array = caesars_raw_name.replace("|", "").replace("-", "").split()
         curr_set = int(cleaned_caesars_name_array[0][0])
-        curr_game = int(cleaned_caesars_name_array[-1][0])
+        curr_game = int(cleaned_caesars_name_array[-1])
+        #print("raw name:", caesars_raw_name, "extracted curr_game", curr_game)
         return GameLine(line_name = caesars_raw_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None)
 
-# class GameLine:
-#     def __init__(self, line_name, cleaned_line_name, curr_set, curr_game, curr_points, total_points_in_match, total_games_in_match):
-#         self.line_name = line_name
-#         self.cleaned_line_name = cleaned_line_name
-#         self.curr_set = curr_set
-#         self.curr_game = curr_game
-#         self.curr_points = curr_points
-#         self.total_points_in_match = total_points_in_match
-#         self.total_games_in_match = total_games_in_match
 
 class GameLine:
     def __init__(self, line_name, cleaned_line_name, curr_set, curr_game, curr_points, total_points_in_match, total_games_in_match):
@@ -182,8 +174,8 @@ def parse_event_name(json):
 
 if __name__ == "__main__":
     # test_local()
-    # res = test_full_code("online")  
-    res = test_full_code("local")
+    res = test_full_code("online")  
+    # res = test_full_code("local")
     # print("random things")
     # for item in res:
     #     for attribute in (vars(res[item])):

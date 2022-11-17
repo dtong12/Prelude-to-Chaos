@@ -9,6 +9,10 @@ import random
 
 import time
 import collections
+
+import aiohttp
+import asyncio
+import platform
 """
 What I need:
 - Get all current games
@@ -17,9 +21,7 @@ What I need:
     #Current points
     #Let's not worry about the game history, we just want full on alarms
 """
-
 #step 1: Get all of the live game data
-
 #and we want to eventually standardize the names
 
 
@@ -66,7 +68,8 @@ def get_softscore_live_games_ids():
     event_ids = []
     for event in json_response['events']:
         event_ids.append(event['id'])
-    print('Gathered event_ids', event_ids)
+    print('Finished gathering event_ids', event_ids)
+    print(f"Found {len(event_ids)} events")
     return event_ids
 
 
@@ -93,8 +96,8 @@ def get_all_game_data(event_id):
         }
 
         response = requests.request("GET", url, headers=headers, data=payload)
+        print("game data", response.status_code)
         return json.loads(response.text)
-
     def point_by_point(event_id):
 
         url = f"https://api.sofascore.com/api/v1/event/{event_id}/point-by-point"
@@ -117,6 +120,7 @@ def get_all_game_data(event_id):
         }
 
         response = requests.request("GET", url, headers=headers, data=payload)
+        print("point by point", response.status_code)
         return json.loads(response.text)
 
 
@@ -142,7 +146,7 @@ def get_all_game_data(event_id):
         }
 
         response = requests.request("GET", url, headers=headers, data=payload)
-        #print(event_id, response.status_code)
+        print('game statistics', response.status_code)
         return json.loads(response.text)
 
     return game_data(event_id), point_by_point(event_id), game_statistics(event_id)
@@ -163,8 +167,118 @@ def sofascore_main():
         json.dump(ans, f)
 
 
-if __name__ == "__main__":
-    # get_softscore_live_games_ids()
-    sofascore_main()
+# def test_async_within_sync():
+#     main_2()
 
+if platform.system()=='Windows':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+ans = collections.defaultdict(lambda: collections.defaultdict())
+
+start_time = time.time()
+async def async_game_data(session, event_id):
+        url = f"https://api.sofascore.com/api/v1/event/{event_id}"
+
+        payload={}
+        headers = {
+        'authority': 'api.sofascore.com',
+        'accept': '*/*',
+        'accept-language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
+        'cache-control': 'max-age=0',
+        'origin': 'https://www.sofascore.com',
+        'referer': 'https://www.sofascore.com/',
+        'sec-ch-ua': '"Chromium";v="106", "Google Chrome";v="106", "Not;A=Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
+        }
+
+        async with session.get(url, headers=headers, data=payload) as response:
+            # response = requests.request("GET", url, headers=headers, data=payload)
+            # print("game data", response.status)
+            response_res = await response.json()
+            ans[event_id]['game_data_json'] = response_res
+
+
+async def async_point_by_point(session, event_id):
+
+    url = f"https://api.sofascore.com/api/v1/event/{event_id}/point-by-point"
+    payload={}
+    headers = {
+    'authority': 'api.sofascore.com',
+    'accept': '*/*',
+    'accept-language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
+    'cache-control': 'max-age=0',
+    'if-none-match': 'W/"40af09b3f7"',
+    'origin': 'https://www.sofascore.com',
+    'referer': 'https://www.sofascore.com/',
+    'sec-ch-ua': '"Chromium";v="106", "Google Chrome";v="106", "Not;A=Brand";v="99"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-site',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
+    }
+    async with session.get(url, headers=headers, data=payload) as response:
+        #response = requests.request("GET", url, headers=headers, data=payload)
+        # print("point by point", response.status)
+        response_res = await response.json()
+        ans[event_id]['point_by_point'] = response_res
+
+
+async def async_game_statistics(session, event_id):
+    url = f"https://api.sofascore.com/api/v1/event/{event_id}/statistics"
+
+    payload={}
+    headers = {
+    'authority': 'api.sofascore.com',
+    'accept': '*/*',
+    'accept-language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
+    'cache-control': 'max-age=0',
+    'if-none-match': 'W/"9fbc230418"',
+    'origin': 'https://www.sofascore.com',
+    'referer': 'https://www.sofascore.com/',
+    'sec-ch-ua': '"Chromium";v="106", "Google Chrome";v="106", "Not;A=Brand";v="99"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-site',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
+    }
+    async with session.get(url, headers=headers, data=payload) as response:
+        response_res = await response.json()
+        ans[event_id]['game_statistics'] = response_res
+
+
+def async_sofascore_main():
+    all_event_ids = get_softscore_live_games_ids()
+    print("all event ids", all_event_ids)
+
+    async def main():
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for event_id in all_event_ids:
+                tasks.append(asyncio.ensure_future(async_game_data(session, event_id)))
+                tasks.append(asyncio.ensure_future(async_point_by_point(session, event_id)))
+                tasks.append(asyncio.ensure_future(async_game_statistics(session, event_id)))
+            asyncio_gather = await asyncio.gather(*tasks)
+
+    asyncio.run(main())
+    print("--- %s seconds ---" % (time.time() - start_time))
+    print("length of res", len(ans))
+
+    with open('softscore_current_event.json', 'w') as f:
+        json.dump(ans, f)
+
+
+if __name__ == "__main__":
+    # sofascore_main()
+    # test_async_within_sync()
+    # main_2()
+    #print("running main")
+    async_sofascore_main()
     

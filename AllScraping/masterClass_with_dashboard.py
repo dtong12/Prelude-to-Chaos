@@ -17,7 +17,7 @@ import caesarsCurrentEvents as caesarsCurrentEvents
 import pytz
 from datetime import timedelta
 import os
-st_autorefresh(interval=0.33 * 60 * 1000, key="dataframerefresh")
+#st_autorefresh(interval=0.33 * 60 * 1000, key="dataframerefresh")
 
 
 def print_sofaScore_without_json(sofascore):
@@ -56,7 +56,9 @@ def main():
     def game_state_glitch_check(sportsbook, sofaScoreEvent, gameLine, item):
 
         print(f"\n {sportsbook} GLITCH CHECK")
-        print("sofascore dict", return_sofaScoreEvent_without_input(sofaScoreEvent))
+        # print("sofascore dict", return_sofaScoreEvent_without_input(sofaScoreEvent))
+        uprint(return_sofaScoreEvent_without_input(sofaScoreEvent))
+        
         print("gameLine dict", gameLine.__dict__)
         try:
             glitches = ''
@@ -100,7 +102,6 @@ def main():
             st.markdown(f'<h1 style="color:#ff6961;font-size:10px;">Glitches: {glitches}</h1>', unsafe_allow_html=True)
             
             if glitches != '':
-
                 print("Glitch detected... aggregating all glitches")
                 payload = {
                     "sportsbook":sportsbook, 
@@ -125,7 +126,7 @@ def main():
     st.title("Prelude To Chaos")
     col1, col2, col3, col4 = st.columns(4)
 
-    sofascore_main()
+    async_sofascore_main()
     allSofascoreGamesDict = ingest_softscore_data()
     allCaesarsGamesDict = caesarsParser.test_full_code("online")  
     allDraftkingsGamesDict = draftkingsParser.test_full_code("online")

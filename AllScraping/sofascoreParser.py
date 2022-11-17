@@ -3,7 +3,7 @@ from unidecode import unidecode
 
 
 
-
+#https://www.twilio.com/blog/asynchronous-http-requests-in-python-with-aiohttp
 
 
 def test_local():
@@ -61,7 +61,6 @@ def get_event_name(event):
 
     # print("combined event", home_team_name, away_team_name)
     ans = f"{home_team_name} vs {away_team_name}"
-
     return ans
 
 def ingest_softscore_data():
@@ -110,7 +109,7 @@ class SofaScoreGameState:
         except: self.curr_state = None
         try: self.curr_set = int(self.input['game_data_json']['event']['status']['description'][0]) #"3rd set" just take the first character
         except: self.curr_set = None
-        try: #reading just the length doesn't work because when the set changes.. the set changes, but the games dont update till the first one is done
+        try: #reading just the length doesn't work because when the set changes.. the set changes, but the games dont update till the first one is done (first one is done == first point is scored?)
             #hence caesars reads set 2, game 1, but sofa reads set 2 (but the games are still from set 1 so the length is 10)
             #fixed this by reading for specific set
             self.curr_game = 1
@@ -126,8 +125,30 @@ class SofaScoreGameState:
                     self.curr_game = len(specific_set['games']) 
         except: 
             self.curr_game = None #should be the current games for the current set
-        try: self.curr_points = len(self.input['point_by_point']['pointByPoint'][0]['games'][0]['points'])
-        except: self.curr_points = None
+        try:   
+            #implement something similar to the one above
+            # We need to make sure that game array we are reading points from is the latest game of the new set.
+            #Ex: Sofascore should read set 2, game 1, point 1
+            #but instead it reads set 2, game 1, point 10 (10 points in set 1, game 7, point 10)
+            
+            #so we must read it as follows
+
+            self.curr_points = 1 #default of 1
+
+            if len(self.input['point_by_point']['pointByPoint']) == 0:
+                print("Notes: No point by point data in curr_points scan")
+                raise Exception
+            
+            for specific_set in self.input['point_by_point']['pointByPoint']:
+                # print("specific_set", specific_set)
+                if specific_set['set'] == self.curr_set:
+
+                    self.curr_points = len(specific_set['games'][0]['points'])#len(specific_set['games']) 
+
+            #old code below
+            #self.curr_points = len(self.input['point_by_point']['pointByPoint'][0]['games'][0]['points']) #this is just taking the top games open Edit: This leads to errors due to when a new set opens, 
+        except: 
+            self.curr_points = None
 
         try: self.home_player = self.input['game_data_json']['event']['homeTeam']['shortName']
         except: self.home_player = None
@@ -168,5 +189,6 @@ if __name__ == "__main__":
     #test_local()
     #store something else on top
     # test_local()
-    sofascore_main()
+    #sofascore_main()
+    async_sofascore_main()
     ingest_softscore_data()
