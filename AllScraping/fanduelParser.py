@@ -24,16 +24,6 @@ import re
 event name Kasatkina vs Kalinskaya
 """
 
-#LETS JUST LEAVE FANDUEL FOR NOW
-# class GameLine:
-#     def __init__(self, line_name, cleaned_line_name, curr_set, curr_game, curr_points, total_points_in_match, total_games_in_match):
-#         self.line_name = line_name
-#         self.cleaned_line_name = cleaned_line_name
-#         self.curr_set = curr_set
-#         self.curr_game = curr_game
-#         self.curr_points = curr_points
-#         self.total_points_in_match = total_points_in_match
-#         self.total_games_in_match = total_games_in_match
 
 class GameLine:
     def __init__(self, line_name, cleaned_line_name, curr_set, curr_game, curr_points, total_points_in_match, total_games_in_match):
@@ -42,7 +32,7 @@ class GameLine:
             self.cleaned_line_name = cleaned_line_name
             self.curr_set = int(curr_set) if curr_set else curr_set
             self.curr_game = int(curr_game) if curr_game else curr_game
-            self.curr_points = curr_points
+            self.curr_points = int(curr_points) if curr_points else curr_points
             self.total_points_in_match = total_points_in_match
             self.total_games_in_match = total_games_in_match
         except Exception as e:
@@ -118,31 +108,35 @@ class FanduelGameState:
                 elif fanduel_stripped_line_name == ['set', 'game', 'handicap']:
                     self.game_lines[markets[market_key]['marketName']] = self.set_game_handicap(markets[market_key]['marketName'])
                 elif fanduel_stripped_line_name == ['correct', 'score', 'set']:
-                    self.game_lines[markets[market_key]['marketName']] = self.set_game_handicap(markets[market_key]['marketName'])
+                    self.game_lines[markets[market_key]['marketName']] = self.correct_score_set(markets[market_key]['marketName'])
                 else:
                     print("remaining -> ", self.strip_game_line(markets[market_key]['marketName']), markets[market_key]['marketName'])
                     pass
 
     def set_game_winner(self, fanduel_raw_name):
+        partial_cleaned_fanduel_name = fanduel_raw_name.replace("|", "").replace("-", "")
         cleaned_fanduel_name_array = fanduel_raw_name.replace("|", "").replace("-", "").split()
         curr_set = cleaned_fanduel_name_array[1]
         curr_game = cleaned_fanduel_name_array[3]
-        return GameLine(line_name = None, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None) 
+        return GameLine(line_name = partial_cleaned_fanduel_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None) 
 
     def total_match_games(self, fanduel_raw_name):
+        partial_cleaned_fanduel_name = fanduel_raw_name.replace("|", "").replace("-", "")
         cleaned_fanduel_name_array = fanduel_raw_name.replace("|", "").replace("-", "").split()
         total_games_in_match = cleaned_fanduel_name_array[3]
-        return GameLine(line_name = None, cleaned_line_name= None, curr_set= None, curr_game = None, curr_points = None, total_points_in_match= None, total_games_in_match= total_games_in_match) 
+        return GameLine(line_name = partial_cleaned_fanduel_name, cleaned_line_name= None, curr_set= None, curr_game = None, curr_points = None, total_points_in_match= None, total_games_in_match= total_games_in_match) 
 
     def set_game_handicap(self, fanduel_raw_name):
+        partial_cleaned_fanduel_name = fanduel_raw_name.replace("|", "").replace("-", "")
         cleaned_fanduel_name_array = fanduel_raw_name.replace("|", "").replace("-", "").split()
         curr_set = cleaned_fanduel_name_array[1]
-        return GameLine(line_name = None, cleaned_line_name= None, curr_set= curr_set, curr_game = None, curr_points = None, total_points_in_match= None, total_games_in_match= None) 
+        return GameLine(line_name = partial_cleaned_fanduel_name, cleaned_line_name= None, curr_set= curr_set, curr_game = None, curr_points = None, total_points_in_match= None, total_games_in_match= None) 
 
     def correct_score_set(self, fanduel_raw_name):
+        partial_cleaned_fanduel_name = fanduel_raw_name.replace("|", "").replace("-", "")
         cleaned_fanduel_name_array = fanduel_raw_name.replace("|", "").replace("-", "").split()
         curr_set = cleaned_fanduel_name_array[2][0]
-        return GameLine(line_name = None, cleaned_line_name= None, curr_set= curr_set, curr_game = None, curr_points = None, total_points_in_match= None, total_games_in_match= None) 
+        return GameLine(line_name = partial_cleaned_fanduel_name, cleaned_line_name= None, curr_set= curr_set, curr_game = None, curr_points = None, total_points_in_match= None, total_games_in_match= None) 
 
 
 def test_full_code(type):
@@ -152,7 +146,7 @@ def test_full_code(type):
         json_res = json.load(open('fd_current_event.json'))
         timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%Y_%m_%d %H:%M:%S")
     elif type == 'online':
-        res = fanduel_main()
+        res = async_fanduel_main() #fanduel_main()
         timestamp, json_res = res['timestamp'], res['ans']
     count = 0
 
@@ -167,11 +161,8 @@ def test_full_code(type):
 
 
 if __name__ == "__main__":
-    # res = test_full_code('online')
-    res = test_full_code('local')
-    # for item in res:
-    #     for attribute in (vars(res[item])):
-    #         print(attribute, vars(res[item])[attribute])
+    # res = test_full_code('local')
+    res = test_full_code('online')
 
     for item in res:
         print("event name", res[item].event_name )

@@ -5,9 +5,8 @@ from datetime import datetime
 import pytz
 
 
-#s3 = boto3.client("s3")
 draftkings_live_tennis_url = 'https://sportsbook.draftkings.com/live?category=live-in-game&subcategory=tennis'
-tennis_prefix = 'https://sportsbook.draftkings.com/event/random-shit/' #https://sportsbook.fanduel.com/tennis/random-shit/31695201
+tennis_prefix = 'https://sportsbook.draftkings.com/event/random-shit/'
 
 def dk_main():
     
@@ -138,9 +137,6 @@ if __name__ == "__main__":
         ans[event_id]['json'] = get_event_data(event_id)
         
         holder = event_id
-    
-    # print("RESULT")
-    # print(ans)
 
     with open('dk_current_event.json', 'w') as f:
         json.dump(ans, f)

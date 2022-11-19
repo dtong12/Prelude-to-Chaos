@@ -169,12 +169,9 @@ def sofascore_main():
 
 # def test_async_within_sync():
 #     main_2()
-
-if platform.system()=='Windows':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 ans = collections.defaultdict(lambda: collections.defaultdict())
 
-start_time = time.time()
+
 async def async_game_data(session, event_id):
         url = f"https://api.sofascore.com/api/v1/event/{event_id}"
 
@@ -254,7 +251,11 @@ async def async_game_statistics(session, event_id):
         ans[event_id]['game_statistics'] = response_res
 
 
+if platform.system()=='Windows':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 def async_sofascore_main():
+    
+    start_time = time.time()
     all_event_ids = get_softscore_live_games_ids()
     print("all event ids", all_event_ids)
 
@@ -274,6 +275,10 @@ def async_sofascore_main():
     with open('softscore_current_event.json', 'w') as f:
         json.dump(ans, f)
 
+    file1 = open("myfile.txt", "w")  # write mode
+    file1.write("RUN \n")
+    file1.close()
+
 
 if __name__ == "__main__":
     # sofascore_main()
@@ -281,4 +286,6 @@ if __name__ == "__main__":
     # main_2()
     #print("running main")
     async_sofascore_main()
+
+
     

@@ -39,7 +39,7 @@ def clean_event_name(team_name):
                 # print(len(first_player_name))
                 # print("first player name", first_player_name)
                 #print("names first and second ", first_player_name, second_player_name)
-        print("one doubles team -> ", f"{first_player_name}/{second_player_name}")
+        #print("one doubles team -> ", f"{first_player_name}/{second_player_name}")
         return f"{first_player_name}/{second_player_name}"
 
     # if " " in team_name: print("split", team_name.split())

@@ -1,4 +1,4 @@
-from draftkingsCurrentEvents import *
+from draftkingsCurrentEvents_vegas import *
 from decimal import Decimal
 import json
 from datetime import timedelta
@@ -155,7 +155,8 @@ def test_full_code(type):
         json_res = json.load(open('dk_current_event.json'))
         timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%Y_%m_%d %H:%M:%S")
     elif type == 'online':
-        res = dk_main()
+        # res = dk_main()
+        res = async_dk_main()
         timestamp, json_res = res['timestamp'], res['ans']
 
     count = 0

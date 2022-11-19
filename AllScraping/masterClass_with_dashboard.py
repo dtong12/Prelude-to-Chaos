@@ -10,14 +10,17 @@ import sofascoreCurrentEvents as sofascoreCurrentEvents
 from streamlit_autorefresh import st_autorefresh
 import utils as utils
 
-import draftkingsCurrentEvents as draftkingsCurrentEvents
+import draftkingsCurrentEvents_vegas as draftkingsCurrentEvents_vegas
 import fanduelCurrentEvents as fanduelCurrentEvents
 import caesarsCurrentEvents as caesarsCurrentEvents
 
 import pytz
 from datetime import timedelta
+import time
 import os
-#st_autorefresh(interval=0.33 * 60 * 1000, key="dataframerefresh")
+
+import asyncio
+st_autorefresh(interval=1 * 60 * 1000, key="dataframerefresh") #once a minute
 
 
 def print_sofaScore_without_json(sofascore):
@@ -30,7 +33,6 @@ def print_sofaScore_without_json(sofascore):
 def return_sofaScoreEvent_without_input(sofascoreEvent):
     copy_state = copy.copy(sofascoreEvent)
     del copy_state.input
-    #print("copy state post delete", vars(copy_state))
     return vars(copy_state)
 
 
@@ -126,7 +128,7 @@ def main():
     st.title("Prelude To Chaos")
     col1, col2, col3, col4 = st.columns(4)
 
-    async_sofascore_main()
+    async_sofascore_main() # sofascore_main()
     allSofascoreGamesDict = ingest_softscore_data()
     allCaesarsGamesDict = caesarsParser.test_full_code("online")  
     allDraftkingsGamesDict = draftkingsParser.test_full_code("online")
@@ -138,7 +140,7 @@ def main():
     print("DRAFTKINGS GAMES", allDraftkingsGamesDict.keys())
     print("FANDUEL GAMES", allFanduelGamesDict.keys())
 
-    print()
+    # print()
     caesars_intersection = allSofascoreGamesDict.keys() & allCaesarsGamesDict.keys() 
     draftkings_intersection = allSofascoreGamesDict.keys() & allDraftkingsGamesDict.keys() 
     fanduel_intersection = allSofascoreGamesDict.keys() & allFanduelGamesDict.keys() 
@@ -236,4 +238,9 @@ def main():
     with col3: display_gameline_expander("Fanduel", allFanduelGamesDict)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print("retrying in 5 seconds despite ", e)
+        time.sleep(5)
+        main()

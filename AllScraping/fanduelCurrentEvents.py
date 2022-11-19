@@ -5,35 +5,58 @@ import json
 from datetime import datetime
 import pytz
 
+import aiohttp
+import asyncio
+import platform
+
 #s3 = boto3.client("s3")
 fanduel_live_tennis_url = 'https://sportsbook.fanduel.com/tennis?tab=live'
 tennis_prefix = 'https://sportsbook.fanduel.com/tennis/random-shit/' #https://sportsbook.fanduel.com/tennis/random-shit/31695201
+region_tag = 'nj' #'ny'
+
+return_popular_only = True
+payload={}
+headers = {}
+
+event_ids = collections.defaultdict()
+ans = collections.defaultdict(lambda: collections.defaultdict())
+sub_res = []
+
+if platform.system()=='Windows':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
-def fanduel_main():
-    bucket = 'tennis-pipeline'
-    timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%m_%d_%Y_ %H:%M:%S")
-    latest_file_name = f'latest-data/fanduel_current' + '.json'
-    historic_file_name = f'historic-data/fanduel-historic-data/{timestamp}_fanduel_historic' + '.json'
+async def async_get_all_event_ids(session, group_id): #this is just the popular tab lmfao?
+    global sub_res
+    url =  f"https://sbapi.{region_tag}.sportsbook.fanduel.com/api/event-page?betexRegion=GBR&capiJurisdiction=intl&currencyCode=USD&exchangeLocale=en_US&includePrices=true&language=en&priceHistory=1&regionCode=NAMERICA&_ak=FhMFpcPWXMeyZxOx&eventId={group_id}"
+    async with session.get(url, headers=headers, data=payload) as response:
+        response_json = await response.json()
 
-    ans = collections.defaultdict()
+        if response_json and 'layout' in response_json and 'tabs' in response_json['layout']:
+            tab_ids = response_json['layout']['tabs']
+            
+            for tab_id in tab_ids: #not sure what this is doing
+                sub_res = tab_ids[tab_id]['title'].lower().replace(" ", "-")
+            
+            if return_popular_only:
+                sub_res = ['popular']
 
-    res = get_tennis_events()
-    print("all event_ids", res)
-    for event_id in res:
-        event_tab_types = get_all_event_ids(event_id) 
-        for event_tab_type in event_tab_types:
-            event_data_json = get_event_data(event_id, event_tab_type)
+async def async_get_event_data(session, event_id, tab_type):
 
-            if event_id not in ans:
-                ans[event_id] = {}
-            ans[event_id]['url'] = tennis_prefix + event_id
-            ans[event_id]['json'] = event_data_json
-    return {'timestamp': timestamp, 'ans': ans}
-    
+    url = f"https://sbapi.{region_tag}.sportsbook.fanduel.com/api/event-page?betexRegion=GBR&capiJurisdiction=intl&currencyCode=USD&exchangeLocale=en_US&includePrices=true&language=en&priceHistory=1&regionCode=NAMERICA&_ak=FhMFpcPWXMeyZxOx&eventId={event_id}&tab={tab_type}"
+    async with session.get(url, headers=headers, data=payload) as response:
+        print("event data receive status",response.status)
+        response_json = await response.json()
+
+        ans[event_id]['url'] = tennis_prefix + event_id
+        ans[event_id]['json'] = response_json        
+
+"""
+BELOW IS FANDUEL MAIN
+"""
 
 def get_tennis_events():
-    url = "https://sbapi.ny.sportsbook.fanduel.com/api/in-play?betexRegion=GBR&capiJurisdiction=intl&currencyCode=USD&exchangeLocale=en_US&comingUpTimeRange=360000&includeStaticCards=false&language=en&regionCode=NAMERICA&timezone=America%2FNew_York&eventTypeId=2&includeTabs=false&_ak=FhMFpcPWXMeyZxOx"
+    url = f"https://sbapi.{region_tag}.sportsbook.fanduel.com/api/in-play?betexRegion=GBR&capiJurisdiction=intl&currencyCode=USD&exchangeLocale=en_US&comingUpTimeRange=360000&includeStaticCards=false&language=en&regionCode=NAMERICA&timezone=America%2FNew_York&eventTypeId=2&includeTabs=false&_ak=FhMFpcPWXMeyZxOx"
     payload={}
     headers = {}
 
@@ -52,38 +75,40 @@ def get_tennis_events():
     return events
 
 
-def get_all_event_ids(event_id, return_popular_only = True):
-    print("event _id", event_id)
-    url = f"https://sbapi.ny.sportsbook.fanduel.com/api/event-page?betexRegion=GBR&capiJurisdiction=intl&currencyCode=USD&exchangeLocale=en_US&includePrices=true&language=en&priceHistory=1&regionCode=NAMERICA&_ak=FhMFpcPWXMeyZxOx&eventId={event_id}"
-    print("url", url)
-    payload={}
-    headers = {}
-    res = []
-    response = requests.request("GET", url, headers=headers, data=payload)
-    response_json = response.json()
+def async_fanduel_main():
+    timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%Y_%m_%d %H:%M:%S")
+    start_time = time.time()
 
-    tab_ids = response_json['layout']['tabs']
+    res = get_tennis_events()
+    print("all event_ids", res)
 
-    for tab_id in tab_ids:
-        res = tab_ids[tab_id]['title'].lower().replace(" ", "-")
+    async def main():
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for event_id in res:
+                tasks.append(asyncio.ensure_future(async_get_all_event_ids(session, event_id)))
+                #saves results to res, but doesn't put that anywhere
+            asyncio_gather = await asyncio.gather(*tasks)
 
-    if return_popular_only:
-        return ['popular']
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for event_id in res:
+                for event_tab_type in sub_res:
+                    tasks.append(asyncio.ensure_future(async_get_event_data(session, event_id, event_tab_type)))
+            asyncio_gather = await asyncio.gather(*tasks)
+    asyncio.run(main())
 
-    return res
+    time.sleep(0.2)
+    print('sub_res', sub_res)
+    # for item in ans:
+    #     print(item, ans[item]['url'])
+    
+    with open('fd_current_event.json', 'w') as f:
+        json.dump(ans, f)
+
+    return {'timestamp': timestamp, 'ans': ans}
 
 
-def get_event_data(event_id, tabType):
-    url = f"https://sbapi.ny.sportsbook.fanduel.com/api/event-page?betexRegion=GBR&capiJurisdiction=intl&currencyCode=USD&exchangeLocale=en_US&includePrices=true&language=en&priceHistory=1&regionCode=NAMERICA&_ak=FhMFpcPWXMeyZxOx&eventId={event_id}&tab={tabType}"
-    payload={}
-    headers = {}
-    response = requests.request("GET", url, headers=headers, data=payload)
-    print("event data receive status",response.status_code)
-    return response.json()
 
 if __name__ == "__main__":
-    res = fanduel_main()
-
-    res_json = res['ans']
-    with open('fd_current_event.json', 'w') as f:
-        json.dump(res_json, f)
+    async_fanduel_main()

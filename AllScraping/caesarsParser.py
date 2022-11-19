@@ -120,7 +120,7 @@ def test_full_code(type):
         json_res = json.load(open('ca_current_event.json'))
         timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%Y_%m_%d %H:%M:%S")
     elif type == 'online':
-        res = caesars_main()
+        res = async_caesars_main() #res = caesars_main()
         timestamp, json_res = res['timestamp'], res['ans']
         subfolder = f'caesars/caesars_{timestamp}' + '.json'
     count = 0
@@ -158,6 +158,7 @@ def clean_event_name(json):
 
     # print("json-> ", json)
     clean_slash = json.replace("|", "")
+    print('clean_slash', clean_slash)
     first_half, second_half = clean_slash[0:clean_slash.index("vs")], clean_slash[clean_slash.index("vs") + 2:]
     # print("caesars halves", first_half, second_half)
     if '/' in first_half and '/' in second_half:
