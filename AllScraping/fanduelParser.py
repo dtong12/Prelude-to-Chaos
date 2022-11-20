@@ -41,10 +41,15 @@ class GameLine:
 
 class FanduelGameState:
     def __init__(self, event_json):
-        self.event_name =  self.clean_event_name(list(event_json['json']['attachments']['events'].values())[0]['name'])
-        self.event_json = event_json
-        self.game_lines = {}
-        self.get_game_lines()
+        #self.event_name =  self.clean_event_name(list(event_json['json']['attachments']['events'].values())[0]['name'])
+
+        try:
+            self.event_name =  self.clean_event_name(list(event_json['json']['attachments']['events'].values())[0]['name'])
+            self.event_json = event_json
+            self.game_lines = {}
+            self.get_game_lines()
+        except Exception as e:
+            print("error creating fanduel game state", e)
     
     def clean_event_name(self, event_name):
         mod_event_name = event_name.replace(" v ", " vs ")
@@ -99,8 +104,7 @@ class FanduelGameState:
             #print(markets[market_key]['marketName'])
             fanduel_stripped_line_name = self.strip_game_line(markets[market_key]['marketName'])
 
-            #[markets[market_key]['marketName']
-            if markets[market_key]['inPlay'] == True:
+            if markets[market_key]['inPlay'] == True and markets[market_key]['marketStatus'] == 'OPEN': #added line
                 if fanduel_stripped_line_name == ['set', 'game', 'winner']:
                     self.game_lines[markets[market_key]['marketName']] = self.set_game_winner(markets[market_key]['marketName'])
                 elif fanduel_stripped_line_name == ['total', 'match', 'games']:
@@ -153,9 +157,12 @@ def test_full_code(type):
     print("number of games", len(json_res))
 
     for test_event in json_res:
-        ingested_fanduel = FanduelGameState(json_res[test_event])
-        ans[ingested_fanduel.event_name] = ingested_fanduel
-        count += 1 
+        try:
+            ingested_fanduel = FanduelGameState(json_res[test_event])
+            ans[ingested_fanduel.event_name] = ingested_fanduel
+            count += 1 
+        except:
+            pass
     return ans
 
 

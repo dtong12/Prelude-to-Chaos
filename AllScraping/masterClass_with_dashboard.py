@@ -18,9 +18,9 @@ import pytz
 from datetime import timedelta
 import time
 import os
-
 import asyncio
-st_autorefresh(interval=1 * 60 * 1000, key="dataframerefresh") #once a minute
+from functools import wraps, partial
+st_autorefresh(interval= 0.5 * 60 * 1000, key="dataframerefresh") #once a minute
 
 
 def print_sofaScore_without_json(sofascore):
@@ -54,6 +54,7 @@ def main():
     """
 
     global_glitches = []
+
 
     def game_state_glitch_check(sportsbook, sofaScoreEvent, gameLine, item):
 
@@ -124,7 +125,7 @@ def main():
     """
     Official start to the page
     """
-
+    start_time = time.time()
     st.title("Prelude To Chaos")
     col1, col2, col3, col4 = st.columns(4)
 
@@ -133,7 +134,7 @@ def main():
     allCaesarsGamesDict = caesarsParser.test_full_code("online")  
     allDraftkingsGamesDict = draftkingsParser.test_full_code("online")
     allFanduelGamesDict = fanduelParser.test_full_code("online")
-    #get the intersection of two arrays
+    #get the intersection of two arrays 
 
     print('CAESARS GAMES ', allCaesarsGamesDict.keys())
     print('SOFA GAMES ',allSofascoreGamesDict.keys())
@@ -173,9 +174,6 @@ def main():
             st.markdown(f"\t - {item}")
         st.text("Anchored Games")
         st.write(list(fanduel_intersection))
-
-    #Attempting to display games states
-    st.header("Current Game States")
 
     #Showing specific line comparisons
         #Dissecting what Set 1, Game 2, Point 3 winner is
@@ -237,10 +235,12 @@ def main():
     with col2: display_gameline_expander("Draftkings", allDraftkingsGamesDict)
     with col3: display_gameline_expander("Fanduel", allFanduelGamesDict)
 
+    print("--- %s seconds ---" % (time.time() - start_time))
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print("retrying in 5 seconds despite ", e)
-        time.sleep(5)
+        print("retrying in 2 seconds despite ", e)
+        time.sleep(2)
         main()
+    

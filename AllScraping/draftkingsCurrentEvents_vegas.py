@@ -46,24 +46,26 @@ def get_tennis_events_categories():
     url = f"https://sportsbook-us-{region_tag}.draftkings.com//sites/US-{region_tag.upper}-SB/api/v2/displaygroupinfo?format=json"
     response = requests.request("GET", url, headers=headers, data=payload)
     print('pinging tennis main page ->',response.status_code)
-
-    response_json = response.json()
-    current_live_tennis_competitions = response_json['displayGroupInfos']
-
-    tennis_index = 0
-    for index in range(len(current_live_tennis_competitions)):
-        if current_live_tennis_competitions[index]['displayName'] == 'Tennis':
-            tennis_index = index
-            break
     group_ids = []
-    all_tennis_competitions = current_live_tennis_competitions[tennis_index]
-    for tennis_competition in all_tennis_competitions['eventGroupInfos']:
-        if tennis_competition['hasLiveOffers'] == True:
-            group_ids.append(tennis_competition['eventGroupId'])
-        
-    print('tennis competitions ids (Ex: ATP world finals) ->', group_ids)
-    if len(group_ids) == 0:
-        print("no tennis competitions currently")
+    if response.status_code == 200:
+        response_json = response.json()
+        current_live_tennis_competitions = response_json['displayGroupInfos']
+
+        tennis_index = 0
+        for index in range(len(current_live_tennis_competitions)):
+            if current_live_tennis_competitions[index]['displayName'] == 'Tennis':
+                tennis_index = index
+                break
+        all_tennis_competitions = current_live_tennis_competitions[tennis_index]
+        for tennis_competition in all_tennis_competitions['eventGroupInfos']:
+            if tennis_competition['hasLiveOffers'] == True:
+                group_ids.append(tennis_competition['eventGroupId'])
+            
+        print('tennis competitions ids (Ex: ATP world finals) ->', group_ids)
+        if len(group_ids) == 0:
+            print("no tennis competitions currently")
+    else:
+        print("Error code: Draftkings get tennis events Tier 1")
     return group_ids
 
 
@@ -71,19 +73,23 @@ async def async_get_events_from_competition(session, group_id):
     url = f"https://sportsbook-us-{region_tag}.draftkings.com//sites/US-{region_tag.upper}-SB/api/v5/eventgroups/{group_id}?format=json"
     async with session.get(url, headers=headers, data=payload) as response:
         print('response from ->', group_id, response.status)
-        response_json = await response.json()
-        for event in response_json['eventGroup']['events']:
-            if event['eventStatus']['state'] == 'STARTED':
-                event_ids.append(event['eventId'])
+        response_json = await response.json(content_type=None)
+        #print('point of interest',response.status, type(response.status))
+        if response.status == 200:
+            for event in response_json['eventGroup']['events']:
+                if event['eventStatus']['state'] == 'STARTED':
+                    event_ids.append(event['eventId'])
 
 async def async_get_event_data(session, event_id):
     url = f"https://sportsbook-us-{region_tag}.draftkings.com//sites/US-{region_tag.upper}-SB/api/v3/event/{event_id}?format=json"
     async with session.get(url, headers=headers, data=payload) as response:
-        response_json = await response.json()
-        ans[event_id]['url'] = tennis_prefix + event_id
-        ans[event_id]['json'] = response_json
+        response_json = await response.json(content_type=None)
+        if response.status == 200:
+            ans[event_id]['url'] = tennis_prefix + event_id
+            ans[event_id]['json'] = response_json
 
 def async_dk_main():
+    global event_ids
     timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%Y_%m_%d %H:%M:%S")
     start_time = time.time()
     competitions = get_tennis_events_categories()

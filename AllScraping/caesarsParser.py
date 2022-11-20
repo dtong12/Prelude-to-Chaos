@@ -49,11 +49,14 @@ profiles = [
 
 class CaesarsGameState:
     def __init__(self, event_json):
-        self.event_name = clean_event_name(event_json['json']['name'])
-        self.event_json = event_json
-        #print(event_json['json']['name'])
-        self.game_lines = {}
-        self.get_game_lines()
+        try:
+            self.event_name = clean_event_name(event_json['json']['name'])
+            self.event_json = event_json
+            self.game_lines = {}
+            self.get_game_lines()
+        except Exception as e:
+            print('caesars : error getting event name')
+            exit
     
     def strip_game_line(self,game_line):
         game_line = game_line.replace("-", "").replace("|", "")
@@ -128,9 +131,12 @@ def test_full_code(type):
 
     #PRINTS THE EVENT DETECTED AND ADDS THEM TO ANS
     for test_event in json_res:
-        ingested_caesars = CaesarsGameState(json_res[test_event])
-        ans[ingested_caesars.event_name] = ingested_caesars
-        count += 1 
+        try:
+            ingested_caesars = CaesarsGameState(json_res[test_event])
+            ans[ingested_caesars.event_name] = ingested_caesars
+            count += 1 
+        except Exception as e:
+            pass
         #url  = json_res[test_event]['url']
         #event_name = clean_event_name(json_res[test_event]['json']['name'])
         #print("event_name ->", event_name)
@@ -174,10 +180,5 @@ def parse_event_name(json):
 
 
 if __name__ == "__main__":
-    # test_local()
     res = test_full_code("online")  
     # res = test_full_code("local")
-    # print("random things")
-    # for item in res:
-    #     for attribute in (vars(res[item])):
-    #         print(attribute, vars(res[item])[attribute])

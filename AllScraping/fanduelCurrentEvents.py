@@ -30,13 +30,14 @@ async def async_get_all_event_ids(session, group_id): #this is just the popular 
     global sub_res
     url =  f"https://sbapi.{region_tag}.sportsbook.fanduel.com/api/event-page?betexRegion=GBR&capiJurisdiction=intl&currencyCode=USD&exchangeLocale=en_US&includePrices=true&language=en&priceHistory=1&regionCode=NAMERICA&_ak=FhMFpcPWXMeyZxOx&eventId={group_id}"
     async with session.get(url, headers=headers, data=payload) as response:
-        response_json = await response.json()
+        response_json = await response.json(content_type=None)
 
         if response_json and 'layout' in response_json and 'tabs' in response_json['layout']:
             tab_ids = response_json['layout']['tabs']
             
             for tab_id in tab_ids: #not sure what this is doing
                 sub_res = tab_ids[tab_id]['title'].lower().replace(" ", "-")
+                print("sub_res", sub_res)
             
             if return_popular_only:
                 sub_res = ['popular']
@@ -44,9 +45,10 @@ async def async_get_all_event_ids(session, group_id): #this is just the popular 
 async def async_get_event_data(session, event_id, tab_type):
 
     url = f"https://sbapi.{region_tag}.sportsbook.fanduel.com/api/event-page?betexRegion=GBR&capiJurisdiction=intl&currencyCode=USD&exchangeLocale=en_US&includePrices=true&language=en&priceHistory=1&regionCode=NAMERICA&_ak=FhMFpcPWXMeyZxOx&eventId={event_id}&tab={tab_type}"
+    print("ex url", url)
     async with session.get(url, headers=headers, data=payload) as response:
         print("event data receive status",response.status)
-        response_json = await response.json()
+        response_json = await response.json(content_type=None)
 
         ans[event_id]['url'] = tennis_prefix + event_id
         ans[event_id]['json'] = response_json        

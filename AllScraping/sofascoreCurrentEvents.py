@@ -195,7 +195,7 @@ async def async_game_data(session, event_id):
         async with session.get(url, headers=headers, data=payload) as response:
             # response = requests.request("GET", url, headers=headers, data=payload)
             # print("game data", response.status)
-            response_res = await response.json()
+            response_res = await response.json(content_type=None)
             ans[event_id]['game_data_json'] = response_res
 
 
@@ -222,7 +222,7 @@ async def async_point_by_point(session, event_id):
     async with session.get(url, headers=headers, data=payload) as response:
         #response = requests.request("GET", url, headers=headers, data=payload)
         # print("point by point", response.status)
-        response_res = await response.json()
+        response_res = await response.json(content_type=None)
         ans[event_id]['point_by_point'] = response_res
 
 
@@ -247,7 +247,7 @@ async def async_game_statistics(session, event_id):
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
     }
     async with session.get(url, headers=headers, data=payload) as response:
-        response_res = await response.json()
+        response_res = await response.json(content_type=None)
         ans[event_id]['game_statistics'] = response_res
 
 

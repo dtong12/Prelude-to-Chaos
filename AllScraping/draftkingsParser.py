@@ -28,10 +28,14 @@ class GameLine:
 
 class DraftkingsGameState:
     def __init__(self, event_json):
-        self.event_name = clean_event_name(event_json['json']['event']['name'])
-        self.event_json = event_json
-        self.game_lines = {}
-        self.get_game_lines()
+        try:
+            self.event_name = clean_event_name(event_json['json']['event']['name'])
+            self.event_json = event_json
+            self.game_lines = {}
+            self.get_game_lines()
+        except Exception as e:
+            print('draftkings : error getting event name')
+            exit
 
     def strip_game_line(self, game_line):
         game_line = game_line.replace("-", "").replace("/", "")
@@ -79,7 +83,8 @@ class DraftkingsGameState:
                                 print("remaining -> ",self.strip_game_line(bottom_offer['label']), bottom_offer['label'])
                                 pass
                         else:
-                            print('line is closed', bottom_offer['label'])
+                            #print('line is closed',) #bottom_offer['label'], f"bottom offer is open: {bottom_offer['isOpen']} bottom offer is suspended {bottom_offer['isSuspended']}")
+                            pass
     def score_after_games_set(self, draftkings_raw_name):
         cleaned_draftkings_name_array = draftkings_raw_name.replace("|", "").replace("-", "").lower().split()
         curr_set = cleaned_draftkings_name_array[4][0]
@@ -163,11 +168,13 @@ def test_full_code(type):
     print("Number of Games", len(json_res))
 
     for test_event in json_res:
-        ingested_draftkings = DraftkingsGameState(json_res[test_event])
-        ans[ingested_draftkings.event_name] = ingested_draftkings
-        count += 1 
+        try:
+            ingested_draftkings = DraftkingsGameState(json_res[test_event])
+            ans[ingested_draftkings.event_name] = ingested_draftkings
+            count += 1 
+        except:
+            pass
     return ans
-
     
 #parse the json to get lines like a game event's moneyline
 #load some of the json
@@ -201,22 +208,24 @@ def clean_event_name(json):
     #print("uncleaned event_name", json)
     clean_slash = json.replace(" / ", "/").replace("@", "vs")
     #print('changed @ sign', clean_slash)
+    try:
+        first_half, second_half = clean_slash[0:clean_slash.index("vs")], clean_slash[clean_slash.index("vs") + 2:]
+        #print("halves", first_half, second_half)
 
-    first_half, second_half = clean_slash[0:clean_slash.index("vs")], clean_slash[clean_slash.index("vs") + 2:]
-    #print("halves", first_half, second_half)
+        if '/' in first_half and '/' in second_half:
+            player_one, player_two = remove_first_name_from_halves_doubles(first_half)
+            player_three, player_four = remove_first_name_from_halves_doubles(second_half)
+            #print('final res doubles', player_one + '/' + player_two + " vs " + player_three + "/" + player_four, "\n")
+            print(player_one + '/' + player_two + " vs " + player_three + "/" + player_four)
+            return player_one + '/' + player_two + " vs " + player_three + "/" + player_four
 
-    if '/' in first_half and '/' in second_half:
-        player_one, player_two = remove_first_name_from_halves_doubles(first_half)
-        player_three, player_four = remove_first_name_from_halves_doubles(second_half)
-        #print('final res doubles', player_one + '/' + player_two + " vs " + player_three + "/" + player_four, "\n")
-        print(player_one + '/' + player_two + " vs " + player_three + "/" + player_four)
-        return player_one + '/' + player_two + " vs " + player_three + "/" + player_four
-
-    else:
-        ans = remove_first_name_from_singles(first_half) + ' vs ' + remove_first_name_from_singles(second_half)
-        #print('final res singles', ans, "\n")
-        print(ans)
-        return ans
+        else:
+            ans = remove_first_name_from_singles(first_half) + ' vs ' + remove_first_name_from_singles(second_half)
+            #print('final res singles', ans, "\n")
+            print(ans)
+            return ans
+    except Exception as e:
+        print("error occured with <self.event_name = clean_event_name(event_json['json']['event']['name'])>")
 
 
 if __name__ == "__main__":
