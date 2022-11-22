@@ -39,7 +39,8 @@ tennis_prefix = 'https://sportsbook.draftkings.com/event/random-shit/'
 
 #############################
 
-event_ids = []
+#event_ids = []
+event_ids = set()
 ans = collections.defaultdict(lambda: collections.defaultdict())
 
 def get_tennis_events_categories():
@@ -78,7 +79,8 @@ async def async_get_events_from_competition(session, group_id):
         if response.status == 200:
             for event in response_json['eventGroup']['events']:
                 if event['eventStatus']['state'] == 'STARTED':
-                    event_ids.append(event['eventId'])
+                    #event_ids.append(event['eventId'])
+                    event_ids.add(event['eventId'])
 
 async def async_get_event_data(session, event_id):
     url = f"https://sportsbook-us-{region_tag}.draftkings.com//sites/US-{region_tag.upper}-SB/api/v3/event/{event_id}?format=json"

@@ -122,6 +122,7 @@ class FanduelGameState:
         cleaned_fanduel_name_array = fanduel_raw_name.replace("|", "").replace("-", "").split()
         curr_set = cleaned_fanduel_name_array[1]
         curr_game = cleaned_fanduel_name_array[3]
+        print("SET AND GAME WINNER DETECTED")
         return GameLine(line_name = partial_cleaned_fanduel_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None) 
 
     def total_match_games(self, fanduel_raw_name):

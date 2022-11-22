@@ -21,6 +21,9 @@ import os
 import asyncio
 from functools import wraps, partial
 
+from datetime import datetime
+import pytz
+
 
 
 def print_sofaScore_without_json(sofascore):
@@ -34,6 +37,8 @@ def return_sofaScoreEvent_without_input(sofascoreEvent):
     copy_state = copy.copy(sofascoreEvent)
     del copy_state.input
     return vars(copy_state)
+
+
 
 
 def main():
@@ -52,12 +57,11 @@ def main():
     If gameline is for game 2, point 3 that's a glitch.
     Without this note, you may have compared sofascore point 3 <= gameline points which wouldn't raise an alarm
     """
-    #st_autorefresh(interval= 0.5 * 60 * 1000, key="dataframerefresh") #twice a minute
+    streamlit_json_payload = {}
     global_glitches = []
-    print("global glitches after purge", global_glitches)
+    timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%Y_%m_%d %H:%M:%S")
 
     def game_state_glitch_check(sportsbook, sofaScoreEvent, gameLine, item):
-
         print(f"\n {sportsbook} GLITCH CHECK")
         # print("sofascore dict", return_sofaScoreEvent_without_input(sofaScoreEvent))
         uprint(return_sofaScoreEvent_without_input(sofaScoreEvent))
@@ -67,11 +71,22 @@ def main():
             set_matching = None
             game_matching = None
             point_matching = None
+
+            if item not in streamlit_json_payload['analysis'][sportsbook]:
+                streamlit_json_payload['analysis'][sportsbook][item] = {}
+
+            if gameLine.line_name not in streamlit_json_payload['analysis'][sportsbook][item]:
+                streamlit_json_payload['analysis'][sportsbook][item][gameLine.line_name] = {
+                    'set_matching': '',
+                    'game_matching': '',
+                    'point_matching': '',
+                    'glitches': ''
+                }
+
             if gameLine.curr_set and sofaScoreEvent.curr_set: 
                 if gameLine.curr_set < sofaScoreEvent.curr_set: #then that set on the sportsbook is passed
                     print("glitch in set")
                     glitches += "glitch in set"
-                
                 #elif gameLine.curr_set >= sofaScoreEvent.curr_set:
                 set_matching = f"-   Set -> Sofa: {sofaScoreEvent.curr_set } {sportsbook}: {gameLine.curr_set}" 
                     
@@ -80,7 +95,6 @@ def main():
                     if gameLine.curr_game < sofaScoreEvent.curr_game:
                         print("glitch game")
                         glitches += "glitch in game"
-                    #elif gameLine.curr_game >= sofaScoreEvent.curr_game:
                     game_matching = f"-   Game -> Sofa: {sofaScoreEvent.curr_game } {sportsbook}: {gameLine.curr_game}" 
             if gameLine.curr_set and sofaScoreEvent.curr_set and gameLine.curr_game and sofaScoreEvent.curr_game and gameLine.curr_points and sofaScoreEvent.curr_points:
                 if gameLine.curr_set == sofaScoreEvent.curr_set:
@@ -95,14 +109,15 @@ def main():
                         point_matching = f"-   Point -> Sofa: {sofaScoreEvent.curr_points } {sportsbook}: {gameLine.curr_points}" 
 
             st.markdown(f'<h1 style="color:#FFFFFF;font-size:18px;">{gameLine.line_name}</h1>', unsafe_allow_html=True)
-            if set_matching:
-                st.markdown(f'<h1 style="color:#33ff33;font-size:14px;">{set_matching}</h1>', unsafe_allow_html=True)
-            if game_matching:
-                st.markdown(f'<h1 style="color:#33ff33;font-size:14px;">{game_matching}</h1>', unsafe_allow_html=True)
-            if point_matching:
-                st.markdown(f'<h1 style="color:#33ff33;font-size:14px;">{point_matching}</h1>', unsafe_allow_html=True)
-            st.markdown(f'<h1 style="color:#ff6961;font-size:10px;">Glitches: {glitches}</h1>', unsafe_allow_html=True)
-            
+            print('game_matching', game_matching)
+
+            if set_matching: streamlit_json_payload['analysis'][sportsbook][item][gameLine.line_name]['set_matching'] = set_matching
+            if game_matching: streamlit_json_payload['analysis'][sportsbook][item][gameLine.line_name]['game_matching'] = game_matching
+            if point_matching: streamlit_json_payload['analysis'][sportsbook][item][gameLine.line_name]['point_matching'] = point_matching
+            if glitches: streamlit_json_payload['analysis'][sportsbook][item][gameLine.line_name]['glitches'] = glitches
+            #doing line analysis at the end MOOSE
+
+            #Add glitches to global_glitches at the end
             if glitches != '':
                 print("Glitch detected... aggregating all glitches")
                 payload = {
@@ -117,10 +132,9 @@ def main():
                         payload[key] = config[key]
                 global_glitches.append(payload)
         except Exception as e:
-            print('Exception: ', e)
+            print('Exception: ', repr(e))
             st.markdown(f'<h1 style="color:#FAC898;font-size:10px;">Exceptions: {e} {gameLine.line_name}</h1>', unsafe_allow_html=True)
-        
-
+    
     """
     Official start to the page
     """
@@ -135,85 +149,39 @@ def main():
     allFanduelGamesDict = fanduelParser.test_full_code("online")
     #get the intersection of two arrays 
 
-    print('CAESARS GAMES ', allCaesarsGamesDict.keys())
-    print('SOFA GAMES ',allSofascoreGamesDict.keys())
-    print("DRAFTKINGS GAMES", allDraftkingsGamesDict.keys())
-    print("FANDUEL GAMES", allFanduelGamesDict.keys())
-
     # print()
     caesars_intersection = allSofascoreGamesDict.keys() & allCaesarsGamesDict.keys() 
     draftkings_intersection = allSofascoreGamesDict.keys() & allDraftkingsGamesDict.keys() 
     fanduel_intersection = allSofascoreGamesDict.keys() & allFanduelGamesDict.keys() 
-
-    print("CAESARS INTERSECTIONS -> " , caesars_intersection)
-    print("DRAFTKINGS INTERSECTIONS -> " , draftkings_intersection)
-    print("FANDUEL INTERSECTION-> ", fanduel_intersection)
     
-    #Display open games as well as anchored games (Games that have a sofascore anchor as well as being on a sportsbook)
+    
+    streamlit_json_payload['analysis'] = {
+        "caesars": {},
+        "draftkings": {},
+        "fanduel": {}
+    }
 
-    with col1:
-        st.header(f"Sofascore {len(allSofascoreGamesDict.keys())}")
-        for item in sorted(allSofascoreGamesDict.keys()):
-            st.markdown(f"\t - {item}")
-    with col2:
-        st.header(f"Caesars {len(allCaesarsGamesDict.keys())}")
-        for item in sorted(allCaesarsGamesDict.keys()):
-            st.markdown(f"\t - {item}")
-        st.text("Anchored Games")
-        st.write(list(caesars_intersection))
-    with col3:
-        st.header(f"Draftkings {len(allDraftkingsGamesDict.keys())}")
-        for item in sorted(allDraftkingsGamesDict.keys()):
-            st.markdown(f"\t - {item}")
-        st.text("Anchored Games")
-        st.write(list(draftkings_intersection))
-    with col4:
-        st.header(f"Fanduel {len(allFanduelGamesDict.keys())}")
-        for item in sorted(allFanduelGamesDict.keys()):
-            st.markdown(f"\t - {item}")
-        st.text("Anchored Games")
-        st.write(list(fanduel_intersection))
+    def perform_analysis_on_line(sportsbook, intersection, sportsbookGamesDict):
+        print("printing analysis on line", sportsbook)
+        st.header(sportsbook.capitalize())
+        with st.expander(f"{sportsbook.capitalize()} Games"):
+            for item in intersection:
+                sportsbook_event = sportsbookGamesDict[item]
+                sofaScoreEvent = allSofascoreGamesDict[item]
+                st.markdown(f'<h1 style="color:#FAF9F6;font-size:20px;"> Event Name: {item}</h1>', unsafe_allow_html=True)
+                for game_line_key in sportsbook_event.game_lines:
+                    game_line = sportsbook_event.game_lines[game_line_key]
+                    game_state_glitch_check(sportsbook, sofaScoreEvent, game_line, item)
 
-    #Showing specific line comparisons
-        #Dissecting what Set 1, Game 2, Point 3 winner is
-        #Set 1 + Games 2 + Point 3
-
+    #Calculating Lines with Analysis
     st.header("Lines Covered - with Analysis")
     col1, col2, col3 = st.columns(3)
     with col1: 
-        st.header("Caesars")
-        print("Caesars Game Being Analyzed ...")
-        with st.expander(f"Caesars Games"):
-            for item in caesars_intersection:
-                caesarsEvent = allCaesarsGamesDict[item]
-                sofaScoreEvent = allSofascoreGamesDict[item]
-                st.markdown(f'<h1 style="color:#FAF9F6;font-size:20px;"> Event Name: {item}</h1>', unsafe_allow_html=True)
-                for caesars_game_line_key in caesarsEvent.game_lines:
-                    caesars_game_line = caesarsEvent.game_lines[caesars_game_line_key]
-                    game_state_glitch_check('caesars', sofaScoreEvent, caesars_game_line, item)
+        perform_analysis_on_line('caesars', caesars_intersection, allCaesarsGamesDict)
     with col2: 
-        st.header("Draftkings")
-        print("Draftkings Game Being Analyzed...")
-        with st.expander(f"Draftkings Games"):
-            for item in draftkings_intersection:
-                draftkingsEvent = allDraftkingsGamesDict[item]
-                sofaScoreEvent = allSofascoreGamesDict[item]
-                st.markdown(f'<h1 style="color:#FAF9F6;font-size:20px;"> Event Name: {item}</h1>', unsafe_allow_html=True)
-                for draftkings_game_line_key in draftkingsEvent.game_lines:
-                    draftkings_game_line = draftkingsEvent.game_lines[draftkings_game_line_key]
-                    game_state_glitch_check('draftkings', sofaScoreEvent, draftkings_game_line, item)
+        perform_analysis_on_line('draftkings', draftkings_intersection, allDraftkingsGamesDict)
     with col3: 
-        st.header("Fanduel")
-        with st.expander(f"Fanduel Games"):
-            for item in fanduel_intersection:
-                print("fanduel Game Being Analyzed...", item)
-                fanduelEvent = allFanduelGamesDict[item]
-                sofaScoreEvent = allSofascoreGamesDict[item]
-                st.markdown(f'<h1 style="color:#FAF9F6;font-size:20px;"> Event Name: {item}</h1>', unsafe_allow_html=True)
-                for fanduel_game_line_key in fanduelEvent.game_lines:
-                    fanduel_game_line = fanduelEvent.game_lines[fanduel_game_line_key]
-                    game_state_glitch_check('fanduel', sofaScoreEvent, fanduel_game_line, item)
-
+        perform_analysis_on_line('fanduel', fanduel_intersection, allFanduelGamesDict)
 
     st.write("Global glitches", global_glitches)
     print("\n============================================")
@@ -221,20 +189,58 @@ def main():
     if len(global_glitches) != 0:
         print("Data saved")
         utils.send_email(global_glitches)
+    
 
-    #Show the open game lines with no data analysis on them
+    # NO GAME LINE ANALYSIS
     st.header('Covered Lines - No analysis')
+    streamlit_json_payload['no_analysis'] = {}
     col1, col2, col3 = st.columns(3)
     def display_gameline_expander(sportsbook, sportsbookDict):
+        if sportsbook not in streamlit_json_payload['no_analysis']:
+            streamlit_json_payload['no_analysis'][sportsbook] = {}
         with st.expander(f"{sportsbook} Games"):
             for key in sportsbookDict:
-                st.markdown(f"Event name: {key}")
+                if key not in streamlit_json_payload['no_analysis']:
+                    streamlit_json_payload['no_analysis'][sportsbook][key] = {}
                 for gameline in sportsbookDict[key].game_lines:
                     st.markdown(f"\t{gameline}")
-    with col1: display_gameline_expander("Caesars", allCaesarsGamesDict)
-    with col2: display_gameline_expander("Draftkings", allDraftkingsGamesDict)
-    with col3: display_gameline_expander("Fanduel", allFanduelGamesDict)
+                    if gameline not in streamlit_json_payload['no_analysis'][sportsbook][key]:
+                        streamlit_json_payload['no_analysis'][sportsbook][key][gameline] = []
+                    streamlit_json_payload['no_analysis'][sportsbook][key][gameline].append(gameline)
+
+    with col1: display_gameline_expander("caesars", allCaesarsGamesDict)
+    with col2: display_gameline_expander("draftkings", allDraftkingsGamesDict)
+    with col3: display_gameline_expander("fanduel", allFanduelGamesDict)
+
+
+    """
+    Standardizing all game data underneath this
+    """
+    streamlit_json_payload['timestamp'] = timestamp
+    streamlit_json_payload['game_names'] = {}
+    streamlit_json_payload['game_names']['sofa_games'] = list(allSofascoreGamesDict.keys())
+    streamlit_json_payload['game_names']['caesars_games'] = list(allCaesarsGamesDict.keys())
+    streamlit_json_payload['game_names']['draftkings_games'] = list(allDraftkingsGamesDict.keys())
+    streamlit_json_payload['game_names']['fanduel_games'] = list(allFanduelGamesDict.keys())
+    streamlit_json_payload['intersection'] = {}
+    streamlit_json_payload['intersection']['caesars_games'] = list(caesars_intersection)
+    streamlit_json_payload['intersection']['draftkings_games'] = list(draftkings_intersection)
+    streamlit_json_payload['intersection']['fanduel_games'] = list(fanduel_intersection)
+
+    streamlit_json_payload['global_glitches'] = global_glitches
+
+    with open('AllScraping/latest_streamlit_json_payload.json', 'w') as f:
+        #AllScraping\latest_streamlit_json_payload.json
+        json.dump(streamlit_json_payload, f)
 
     print("Total time: --- %s seconds ---" % (time.time() - start_time))
+    print("start time: ", timestamp)
+    f.close()
 if __name__ == "__main__":
-    main()
+    main()    
+    # while True:
+    #     try:
+    #         main()
+    #     except:
+    #         pass
+    #     time.sleep(25)

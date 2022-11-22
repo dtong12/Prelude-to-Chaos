@@ -49,7 +49,6 @@ def get_tennis_events():
     if response.status_code == 200:
         response_json = response.json()
         competitions = response_json['competitions']
-
         for competition in competitions:
             for event in competition['events']:
                 ans.append(event['id'])
