@@ -1,12 +1,14 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
+
+
 import json
 from datetime import datetime
 import pytz
 import sys
 
 
-st_autorefresh(interval= 0.1 * 60 * 1000, key="dataframerefresh")
+st_autorefresh(interval= 0.03 * 60 * 1000, key="dataframerefresh")
 
 def streamlit_main():
     print()
@@ -71,7 +73,9 @@ def streamlit_main():
             st.header(sportsbook.capitalize())
             for game_name in payload['analysis'][sportsbook]:
                 # with st.expander(f"{game_name}"):
-                st.markdown(f'<h1 style="color:#FFFFFF;font-size:22px;">{game_name}</h1>', unsafe_allow_html=True)
+                st.markdown("""---""")
+                st.markdown(f'<h1 style="color:#FFA500;font-size:22px;">{game_name}</h1>', unsafe_allow_html=True)
+                
                 for line_name in payload['analysis'][sportsbook][game_name]:
                     set_matching = payload['analysis'][sportsbook][game_name][line_name]['set_matching']
                     game_matching = payload['analysis'][sportsbook][game_name][line_name]['game_matching']
@@ -109,10 +113,10 @@ def streamlit_main():
                     st.markdown(f"\t{gameline}")
 
     with col3b: 
-        st.header('Caesars')
-        for game_name in payload['no_analysis']['caesars']:
+        st.header('Fanduel')
+        for game_name in payload['no_analysis']['fanduel']:
             with st.expander(game_name):
-                for gameline in payload['no_analysis']['caesars'][game_name]:
+                for gameline in payload['no_analysis']['fanduel'][game_name]:
                     st.markdown(f"\t{gameline}")
 
     print(f"Payload successfully processed at: {payload['timestamp']}")

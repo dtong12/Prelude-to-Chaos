@@ -48,7 +48,6 @@ async def async_get_all_event_ids(session, group_id): #this is just the popular 
                 # sub_res = tab_ids[tab_id]['title'].lower().replace(" ", "-")
                 # print("sub_res", sub_res)
                 sub_res.add(tab_ids[tab_id]['title'].lower().replace(" ", "-"))
-            
             if return_popular_only:
                 sub_res = ['popular']
 
@@ -63,6 +62,11 @@ async def async_get_event_data(session, event_id, tab_type):
         ans[event_id]['url'] = tennis_prefix + event_id
         ans[event_id]['json'] = response_json     
 
+        markets = ans[event_id]['json']['attachments']['markets']
+        if 'markets' not in ans[event_id]:
+            ans[event_id]['markets'] = {}
+        for market_key in markets:
+            ans[event_id]['markets'][market_key] = markets[market_key]
         #MOOSE BELOW NOT WORKING. IT IS AGGREGATING OLD DATA IN SOMEHOW. IT IS NOT REMOVING OLD LINES CLEARLY LOL
         # if event_id in ans and 'json' in ans[event_id]:
         #     #take the markets of the current one
@@ -73,6 +77,8 @@ async def async_get_event_data(session, event_id, tab_type):
         #     ans[event_id]['json'] = response_json   
         #take this popular page and then other markets into it? 
 
+    ans[event_id]['json']['attachments']['markets'] = ans[event_id]['markets'] 
+        #we haven't tagged what hasnt been tagged yet
 
 def get_tennis_events():
     url = f"https://sbapi.{region_tag}.sportsbook.fanduel.com/api/in-play?betexRegion=GBR&capiJurisdiction=intl&currencyCode=USD&exchangeLocale=en_US&comingUpTimeRange=360000&includeStaticCards=false&language=en&regionCode=NAMERICA&timezone=America%2FNew_York&eventTypeId=2&includeTabs=false&_ak=FhMFpcPWXMeyZxOx"
@@ -96,7 +102,7 @@ def get_tennis_events():
 def async_fanduel_main():
     timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%Y_%m_%d %H:%M:%S")
     start_time = time.time()
-
+    
     res = get_tennis_events()
     print("all event_ids", res)
 
@@ -115,10 +121,7 @@ def async_fanduel_main():
                     tasks.append(asyncio.ensure_future(async_get_event_data(session, event_id, event_tab_type)))
             asyncio_gather = await asyncio.gather(*tasks)
 
-
-
     asyncio.run(main())
-
     time.sleep(0.2)
     print('sub_res', sub_res)    
     with open('fd_current_event.json', 'w') as f:

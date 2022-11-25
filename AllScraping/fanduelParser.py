@@ -113,6 +113,12 @@ class FanduelGameState:
                     self.game_lines[markets[market_key]['marketName']] = self.set_game_handicap(markets[market_key]['marketName'])
                 elif fanduel_stripped_line_name == ['correct', 'score', 'set']:
                     self.game_lines[markets[market_key]['marketName']] = self.correct_score_set(markets[market_key]['marketName'])
+                elif fanduel_stripped_line_name == ['set', 'game', 'point', 'winner']:
+                    self.game_lines[markets[market_key]['marketName']] = self.set_game_point_winner(markets[market_key]['marketName'])
+                elif fanduel_stripped_line_name == ['set', 'winner']:
+                    self.game_lines[markets[market_key]['marketName']] = self.set_winner(markets[market_key]['marketName']) 
+                elif fanduel_stripped_line_name == ['set', 'total', 'games', 'overunder']:
+                    self.game_lines[markets[market_key]['marketName']] = self.set_total_games_overunder(markets[market_key]['marketName']) 
                 else:
                     print("remaining -> ", self.strip_game_line(markets[market_key]['marketName']), markets[market_key]['marketName'])
                     pass
@@ -122,7 +128,6 @@ class FanduelGameState:
         cleaned_fanduel_name_array = fanduel_raw_name.replace("|", "").replace("-", "").split()
         curr_set = cleaned_fanduel_name_array[1]
         curr_game = cleaned_fanduel_name_array[3]
-        print("SET AND GAME WINNER DETECTED")
         return GameLine(line_name = partial_cleaned_fanduel_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None) 
 
     def total_match_games(self, fanduel_raw_name):
@@ -141,6 +146,26 @@ class FanduelGameState:
         partial_cleaned_fanduel_name = fanduel_raw_name.replace("|", "").replace("-", "")
         cleaned_fanduel_name_array = fanduel_raw_name.replace("|", "").replace("-", "").split()
         curr_set = cleaned_fanduel_name_array[2][0]
+        return GameLine(line_name = partial_cleaned_fanduel_name, cleaned_line_name= None, curr_set= curr_set, curr_game = None, curr_points = None, total_points_in_match= None, total_games_in_match= None) 
+
+    def set_game_point_winner(self, fanduel_raw_name):
+        partial_cleaned_fanduel_name = fanduel_raw_name.replace("|", "").replace("-", "")
+        cleaned_fanduel_name_array = fanduel_raw_name.replace("|", "").replace("-", "").split()
+        curr_set = cleaned_fanduel_name_array[1][0]
+        curr_game = cleaned_fanduel_name_array[3]
+        point_in_game = cleaned_fanduel_name_array[5]
+        return GameLine(line_name = partial_cleaned_fanduel_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = point_in_game, total_points_in_match= None, total_games_in_match= None) 
+
+    def set_winner(self, fanduel_raw_name):
+        partial_cleaned_fanduel_name = fanduel_raw_name.replace("|", "").replace("-", "")
+        cleaned_fanduel_name_array = fanduel_raw_name.replace("|", "").replace("-", "").split()
+        curr_set = cleaned_fanduel_name_array[1][0]
+        return GameLine(line_name = partial_cleaned_fanduel_name, cleaned_line_name= None, curr_set= curr_set, curr_game = None, curr_points = None, total_points_in_match= None, total_games_in_match= None) 
+    
+    def set_total_games_overunder(self, fanduel_raw_name):
+        partial_cleaned_fanduel_name = fanduel_raw_name.replace("|", "").replace("-", "")
+        cleaned_fanduel_name_array = fanduel_raw_name.replace("|", "").replace("-", "").split()
+        curr_set = cleaned_fanduel_name_array[1][0]
         return GameLine(line_name = partial_cleaned_fanduel_name, cleaned_line_name= None, curr_set= curr_set, curr_game = None, curr_points = None, total_points_in_match= None, total_games_in_match= None) 
 
 
@@ -171,6 +196,3 @@ def test_full_code(type):
 if __name__ == "__main__":
     # res = test_full_code('local')
     res = test_full_code('online')
-
-    for item in res:
-        print("event name", res[item].event_name )

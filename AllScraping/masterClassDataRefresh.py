@@ -7,7 +7,6 @@ import draftkingsParser as draftkingsParser
 import fanduelParser as fanduelParser
 import streamlit as st
 import sofascoreCurrentEvents as sofascoreCurrentEvents
-from streamlit_autorefresh import st_autorefresh
 import utils as utils
 
 import draftkingsCurrentEvents_vegas as draftkingsCurrentEvents_vegas
@@ -20,10 +19,10 @@ import time
 import os
 import asyncio
 from functools import wraps, partial
+import beepy as beep
 
 from datetime import datetime
 import pytz
-
 
 
 def print_sofaScore_without_json(sofascore):
@@ -37,8 +36,6 @@ def return_sofaScoreEvent_without_input(sofascoreEvent):
     copy_state = copy.copy(sofascoreEvent)
     del copy_state.input
     return vars(copy_state)
-
-
 
 
 def main():
@@ -58,6 +55,7 @@ def main():
     Without this note, you may have compared sofascore point 3 <= gameline points which wouldn't raise an alarm
     """
     streamlit_json_payload = {}
+    print("wiping streamlit payload -> ", "streamlit payload->", streamlit_json_payload)
     global_glitches = []
     timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%Y_%m_%d %H:%M:%S")
 
@@ -99,7 +97,7 @@ def main():
             if gameLine.curr_set and sofaScoreEvent.curr_set and gameLine.curr_game and sofaScoreEvent.curr_game and gameLine.curr_points and sofaScoreEvent.curr_points:
                 if gameLine.curr_set == sofaScoreEvent.curr_set:
                     if gameLine.curr_game == sofaScoreEvent.curr_game:
-                        #gameline point 4, sofascore point 4, whcih means the actual game is at point 5
+                        #gameline point 4, sofascore point 4, whcih means the actual game is at point 5 (confirmed seperately nov 25)
                         print("gameline points", type(gameLine.curr_points), gameLine.curr_points)
                         print("sofascoreEvent points", type(sofaScoreEvent.curr_points), sofaScoreEvent.curr_points)
                         if gameLine.curr_points < sofaScoreEvent.curr_points: #the actual game is ahead by one 
@@ -109,14 +107,12 @@ def main():
                         point_matching = f"-   Point -> Sofa: {sofaScoreEvent.curr_points } {sportsbook}: {gameLine.curr_points}" 
 
             st.markdown(f'<h1 style="color:#FFFFFF;font-size:18px;">{gameLine.line_name}</h1>', unsafe_allow_html=True)
-            print('game_matching', game_matching)
 
             if set_matching: streamlit_json_payload['analysis'][sportsbook][item][gameLine.line_name]['set_matching'] = set_matching
             if game_matching: streamlit_json_payload['analysis'][sportsbook][item][gameLine.line_name]['game_matching'] = game_matching
             if point_matching: streamlit_json_payload['analysis'][sportsbook][item][gameLine.line_name]['point_matching'] = point_matching
             if glitches: streamlit_json_payload['analysis'][sportsbook][item][gameLine.line_name]['glitches'] = glitches
             #doing line analysis at the end MOOSE
-
             #Add glitches to global_glitches at the end
             if glitches != '':
                 print("Glitch detected... aggregating all glitches")
@@ -142,6 +138,8 @@ def main():
     st.title("Prelude To Chaos")
     col1, col2, col3, col4 = st.columns(4)
 
+
+    allSofascoreGamesDict,   allCaesarsGamesDict,   allDraftkingsGamesDict, allFanduelGamesDict = [] , [], [], []
     async_sofascore_main() # sofascore_main()
     allSofascoreGamesDict = ingest_softscore_data()
     allCaesarsGamesDict = caesarsParser.test_full_code("online")  
@@ -153,6 +151,10 @@ def main():
     caesars_intersection = allSofascoreGamesDict.keys() & allCaesarsGamesDict.keys() 
     draftkings_intersection = allSofascoreGamesDict.keys() & allDraftkingsGamesDict.keys() 
     fanduel_intersection = allSofascoreGamesDict.keys() & allFanduelGamesDict.keys() 
+
+    print("Caesars intersection", caesars_intersection)
+    print("Draftkings intersection", draftkings_intersection)
+    print("Fanduel intersection", fanduel_intersection)
     
     
     streamlit_json_payload['analysis'] = {
@@ -162,12 +164,12 @@ def main():
     }
 
     def perform_analysis_on_line(sportsbook, intersection, sportsbookGamesDict):
-        print("printing analysis on line", sportsbook)
         st.header(sportsbook.capitalize())
         with st.expander(f"{sportsbook.capitalize()} Games"):
             for item in intersection:
                 sportsbook_event = sportsbookGamesDict[item]
                 sofaScoreEvent = allSofascoreGamesDict[item]
+                print("performing analysis on line", sportsbook, 'game -> ',item)
                 st.markdown(f'<h1 style="color:#FAF9F6;font-size:20px;"> Event Name: {item}</h1>', unsafe_allow_html=True)
                 for game_line_key in sportsbook_event.game_lines:
                     game_line = sportsbook_event.game_lines[game_line_key]
@@ -187,10 +189,10 @@ def main():
     print("\n============================================")
     print("\nglobal glitches length", len(global_glitches), global_glitches)
     if len(global_glitches) != 0:
+        beep.beep(1)
         print("Data saved")
-        utils.send_email(global_glitches)
+        # utils.send_email(global_glitches)
     
-
     # NO GAME LINE ANALYSIS
     st.header('Covered Lines - No analysis')
     streamlit_json_payload['no_analysis'] = {}
@@ -229,18 +231,35 @@ def main():
 
     streamlit_json_payload['global_glitches'] = global_glitches
 
-    with open('AllScraping/latest_streamlit_json_payload.json', 'w') as f:
-        #AllScraping\latest_streamlit_json_payload.json
+
+    with open('latest_streamlit_json_payload.json', 'w') as f:
         json.dump(streamlit_json_payload, f)
+    print("data saved.")
 
     print("Total time: --- %s seconds ---" % (time.time() - start_time))
     print("start time: ", timestamp)
-    f.close()
+    # f.close()
+
+    return streamlit_json_payload
 if __name__ == "__main__":
-    main()    
+
+    #SECTION ONE
+    # main()   
     # while True:
     #     try:
     #         main()
-    #     except:
-    #         pass
+    #     except Exception as e:
+    #         print("ran into exception", e)
     #     time.sleep(25)
+
+    #SECTION TWO
+
+    main()
+    # while True:
+    #     try:
+    #         streamlit_json_payload = main()
+    #         with open('latest_streamlit_json_payload.json', 'w') as f:
+    #             json.dump(streamlit_json_payload, f)
+    #     except Exception as e:
+    #         print("ran into exception", e)
+    #     time.sleep(20)
