@@ -9,7 +9,6 @@ import aiohttp
 import asyncio
 import platform
 
-#s3 = boto3.client("s3")
 fanduel_live_tennis_url = 'https://sportsbook.fanduel.com/tennis?tab=live'
 tennis_prefix = 'https://sportsbook.fanduel.com/tennis/random-shit/' #https://sportsbook.fanduel.com/tennis/random-shit/31695201
 region_tag = 'nj' #'ny'
@@ -26,15 +25,6 @@ sub_res = set()
 if platform.system()=='Windows':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-# def Merge(dict1, dict2):
-#     res = {**dict1, **dict2}
-#     return res
-
-def Merge(dict1, dict2):
-    for i in dict2.keys():
-        dict1[i]=dict2[i]
-    return dict1
-
 async def async_get_all_event_ids(session, group_id): #this is just the popular tab lmfao?
     global sub_res
     url =  f"https://sbapi.{region_tag}.sportsbook.fanduel.com/api/event-page?betexRegion=GBR&capiJurisdiction=intl&currencyCode=USD&exchangeLocale=en_US&includePrices=true&language=en&priceHistory=1&regionCode=NAMERICA&_ak=FhMFpcPWXMeyZxOx&eventId={group_id}"
@@ -45,8 +35,6 @@ async def async_get_all_event_ids(session, group_id): #this is just the popular 
             tab_ids = response_json['layout']['tabs']
             
             for tab_id in tab_ids: #not sure what this is doing
-                # sub_res = tab_ids[tab_id]['title'].lower().replace(" ", "-")
-                # print("sub_res", sub_res)
                 sub_res.add(tab_ids[tab_id]['title'].lower().replace(" ", "-"))
             if return_popular_only:
                 sub_res = ['popular']
@@ -66,16 +54,7 @@ async def async_get_event_data(session, event_id, tab_type):
         if 'markets' not in ans[event_id]:
             ans[event_id]['markets'] = {}
         for market_key in markets:
-            ans[event_id]['markets'][market_key] = markets[market_key]
-        #MOOSE BELOW NOT WORKING. IT IS AGGREGATING OLD DATA IN SOMEHOW. IT IS NOT REMOVING OLD LINES CLEARLY LOL
-        # if event_id in ans and 'json' in ans[event_id]:
-        #     #take the markets of the current one
-        #     preexisting_markets = ans[event_id]['json']['attachments']['markets']
-        #     new_markets_to_be_added = response_json['attachments']['markets']
-        #     ans[event_id]['json']['attachments']['markets'] = Merge(preexisting_markets, new_markets_to_be_added)
-        # else:
-        #     ans[event_id]['json'] = response_json   
-        #take this popular page and then other markets into it? 
+            ans[event_id]['markets'][market_key] = markets[market_key] 
 
     ans[event_id]['json']['attachments']['markets'] = ans[event_id]['markets'] 
         #we haven't tagged what hasnt been tagged yet

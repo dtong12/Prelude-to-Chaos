@@ -1,7 +1,7 @@
 
 
 import copy
-from sofascoreParser import *
+import sofascoreParser as sofascoreParser
 import caesarsParser as caesarsParser
 import draftkingsParser as draftkingsParser
 import fanduelParser as fanduelParser
@@ -20,6 +20,7 @@ import os
 import asyncio
 from functools import wraps, partial
 import beepy as beep
+import json
 
 from datetime import datetime
 import pytz
@@ -62,7 +63,7 @@ def main():
     def game_state_glitch_check(sportsbook, sofaScoreEvent, gameLine, item):
         print(f"\n {sportsbook} GLITCH CHECK")
         # print("sofascore dict", return_sofaScoreEvent_without_input(sofaScoreEvent))
-        uprint(return_sofaScoreEvent_without_input(sofaScoreEvent))
+        sofascoreParser.uprint(return_sofaScoreEvent_without_input(sofaScoreEvent))
         print("gameLine dict", gameLine.__dict__)
         try:
             glitches = ''
@@ -135,8 +136,10 @@ def main():
     #col1, col2, col3, col4 = st.columns(4)
 
     allSofascoreGamesDict,   allCaesarsGamesDict,   allDraftkingsGamesDict, allFanduelGamesDict, allMgmGamesDict = [] , [], [], [], []
-    async_sofascore_main() # sofascore_main()
-    allSofascoreGamesDict = ingest_softscore_data()
+    # async_sofascore_main() # sofascore_main()
+    # allSofascoreGamesDict = ingest_softscore_data()
+
+    allSofascoreGamesDict = sofascoreParser.test_full_code('online')
     allCaesarsGamesDict = caesarsParser.test_full_code("online")  
     allDraftkingsGamesDict = draftkingsParser.test_full_code("online")
     allFanduelGamesDict = fanduelParser.test_full_code("online")
@@ -200,7 +203,7 @@ def main():
 
     display_gameline_expander("caesars", allCaesarsGamesDict)
     display_gameline_expander("draftkings", allDraftkingsGamesDict)
-    display_gameline_expander("fanduel", allFanduelGamesDictsend)
+    display_gameline_expander("fanduel", allFanduelGamesDict)
     display_gameline_expander("mgm", allMgmGamesDict)
 
     """

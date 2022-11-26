@@ -23,7 +23,6 @@ def dk_main():
     return {'timestamp': timestamp, 'ans': ans}
 
 
-
 def get_tennis_events_categories():
     url = "https://sportsbook-us-ny.draftkings.com//sites/US-NY-SB/api/v2/displaygroupinfo?format=json"
 

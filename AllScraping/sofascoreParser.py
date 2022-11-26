@@ -183,6 +183,11 @@ class SofaScoreGameState:
             self.total_games_in_match = None
 
 
+def test_full_code(type):
+    if type == 'online':
+        res = async_sofascore_main()
+        submit_res = ingest_softscore_data()
+        return submit_res
 
 
 if __name__ == "__main__":
@@ -190,5 +195,8 @@ if __name__ == "__main__":
     #store something else on top
     # test_local()
     #sofascore_main()
-    async_sofascore_main()
-    ingest_softscore_data()
+
+    # async_sofascore_main()
+    # ingest_softscore_data()
+
+    test_full_code("online")
