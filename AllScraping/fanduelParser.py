@@ -5,7 +5,6 @@ from datetime import timedelta
 import re
 
 
-
 """
 ['set', 'game', 'winner'] Set 2 Game 6 Winner
 ['total', 'match', 'games'] Total Match Games 25.5

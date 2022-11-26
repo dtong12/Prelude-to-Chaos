@@ -21,11 +21,11 @@ def streamlit_main():
         payload = json.load(json_file)
     
     #title games
-
     sofa_game_json = payload['game_names']['sofa_games']
     caesars_game_json = payload['game_names']['caesars_games']
     draftkings_game_json = payload['game_names']['draftkings_games']
     fanduel_game_json = payload['game_names']['fanduel_games']
+    mgm_game_json = payload['game_names']['mgm_games']
 
     st.write(f"Payload last updated:   {payload['timestamp']}")
     st.write(f"Streamlit last updated:   {last_streamlit_refresh}")
@@ -33,7 +33,7 @@ def streamlit_main():
     st.markdown(f'<h1 style="color:#33ff33;font-size:14px;"> Glitches </h1>', unsafe_allow_html=True)
     st.write(payload['global_glitches'])
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         st.header(f"Sofascore")
         st.markdown(f'<h1 style="color:#FFFFFF;font-size:14px;"> {len(sofa_game_json)} Games </h1>', unsafe_allow_html=True)
@@ -64,9 +64,17 @@ def streamlit_main():
                 st.markdown(f"\t - {item}")
         st.text("Anchored Games")
         st.write(list(payload['intersection']['fanduel_games']))
+    with col5:
+        st.header(f"BetMGM")
+        st.markdown(f'<h1 style="color:#FFFFFF;font-size:14px;"> {len(mgm_game_json)} Games </h1>', unsafe_allow_html=True)
+        with st.expander(f"BetMGM Games"):
+            for item in sorted(mgm_game_json):
+                st.markdown(f"\t - {item}")
+        st.text("Anchored Games")
+        st.write(list(payload['intersection']['mgm_games']))
 
     st.header("Game Analysis Lines")
-    col1a, col2a, col3a = st.columns(3)
+    col1a, col2a, col3a, col4a = st.columns(4)
 
     def generate_analysis(sportsbook):
         with st.expander(f"{sportsbook}"):
@@ -94,11 +102,12 @@ def streamlit_main():
     with col1a: generate_analysis("caesars")
     with col2a: generate_analysis("draftkings")
     with col3a: generate_analysis("fanduel")
+    with col4a: generate_analysis("mgm")
         
 
     #Displaying no analysis lines
     st.header("No analysis lines")
-    col1b, col2b, col3b = st.columns(3)
+    col1b, col2b, col3b, col4b = st.columns(4)
     with col1b: 
         st.header('Caesars')
         for game_name in payload['no_analysis']['caesars']:
@@ -117,6 +126,12 @@ def streamlit_main():
         for game_name in payload['no_analysis']['fanduel']:
             with st.expander(game_name):
                 for gameline in payload['no_analysis']['fanduel'][game_name]:
+                    st.markdown(f"\t{gameline}")
+    with col4b:
+        st.header('mgm')
+        for game_name in payload['no_analysis']['mgm']:
+            with st.expander(game_name):
+                for gameline in payload['no_analysis']['mgm'][game_name]:
                     st.markdown(f"\t{gameline}")
 
     print(f"Payload successfully processed at: {payload['timestamp']}")
