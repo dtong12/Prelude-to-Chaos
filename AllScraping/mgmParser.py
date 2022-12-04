@@ -223,17 +223,22 @@ def clean_event_name(participants): #put in participants
         cleaned_player_two = single_event_clean_first_name(player_two)
         return f"{cleaned_player_one}/{cleaned_player_two}"
 
-    participant_a = participants[0]['name']['short']
-    participant_b = participants[1]['name']['short']
+    participant_a = re.sub("[\(\[].*?[\)\]]", "", participants[0]['name']['short'])
+    participant_b = re.sub("[\(\[].*?[\)\]]", "", participants[1]['name']['short'])
+
+
+    print("RAW PARTICIPANTS", participant_a, participant_b)
 
     if "/" in participant_a and "/" in participant_b:
         cleaned_participant_a = doubles_event_clean_first_name(participant_a)
         cleaned_participant_b = doubles_event_clean_first_name(participant_b)
+        print("testing double")
     else:
         cleaned_participant_a = single_event_clean_first_name(participant_a)
         cleaned_participant_b = single_event_clean_first_name(participant_b)
 
     ans = f"{cleaned_participant_a} vs {cleaned_participant_b}"
+    print("ANS -> ", ans)
     return ans
 
 

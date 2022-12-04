@@ -7,4 +7,4 @@ import time
 while True:
     # os.system("python AllScraping/masterClassDataRefresh.py")  
     os.system("python masterClassDataRefresh.py")  
-    time.sleep(5)
+    time.sleep(15)

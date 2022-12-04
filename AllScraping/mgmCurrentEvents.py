@@ -50,6 +50,7 @@ if platform.system()=='Windows':
 ans = collections.defaultdict(lambda: collections.defaultdict())
 
 def async_mgm_main():
+    print(" /////////// BETMGM ////////////////")
     timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%Y_%m_%d %H:%M:%S")
 
     event_ids = get_tennis_events()

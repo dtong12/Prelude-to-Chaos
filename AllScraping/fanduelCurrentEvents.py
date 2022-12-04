@@ -44,7 +44,7 @@ async def async_get_event_data(session, event_id, tab_type):
     url = f"https://sbapi.{region_tag}.sportsbook.fanduel.com/api/event-page?betexRegion=GBR&capiJurisdiction=intl&currencyCode=USD&exchangeLocale=en_US&includePrices=true&language=en&priceHistory=1&regionCode=NAMERICA&_ak=FhMFpcPWXMeyZxOx&eventId={event_id}&tab={tab_type}"
     #print("ex url", url)
     async with session.get(url, headers=headers, data=payload) as response:
-        print("event data receive status",response.status, url)
+        # print("event data receive status",response.status, url)
         response_json = await response.json(content_type=None)
 
         ans[event_id]['url'] = tennis_prefix + event_id
@@ -79,6 +79,7 @@ def get_tennis_events():
 
 
 def async_fanduel_main():
+    print(" /////////// FANDUEL ////////////////")
     timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%Y_%m_%d %H:%M:%S")
     start_time = time.time()
     
@@ -102,11 +103,9 @@ def async_fanduel_main():
 
     asyncio.run(main())
     time.sleep(0.2)
-    print('sub_res', sub_res)    
     with open('fd_current_event.json', 'w') as f:
         json.dump(ans, f)
     return {'timestamp': timestamp, 'ans': ans}
-
 
 if __name__ == "__main__":
     async_fanduel_main()

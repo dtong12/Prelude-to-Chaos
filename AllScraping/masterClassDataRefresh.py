@@ -13,6 +13,8 @@ import draftkingsCurrentEvents_vegas as draftkingsCurrentEvents_vegas
 import fanduelCurrentEvents as fanduelCurrentEvents
 import caesarsCurrentEvents as caesarsCurrentEvents
 
+import testing_full_async_payload as async_payload
+
 import pytz
 from datetime import timedelta
 import time
@@ -62,7 +64,6 @@ def main():
 
     def game_state_glitch_check(sportsbook, sofaScoreEvent, gameLine, item):
         print(f"\n {sportsbook} GLITCH CHECK")
-        # print("sofascore dict", return_sofaScoreEvent_without_input(sofaScoreEvent))
         sofascoreParser.uprint(return_sofaScoreEvent_without_input(sofaScoreEvent))
         print("gameLine dict", gameLine.__dict__)
         try:
@@ -133,36 +134,49 @@ def main():
     Official start to the page
     """
     start_time = time.time()
-    #col1, col2, col3, col4 = st.columns(4)
 
-    allSofascoreGamesDict,   allCaesarsGamesDict,   allDraftkingsGamesDict, allFanduelGamesDict, allMgmGamesDict = [] , [], [], [], []
-    # async_sofascore_main() # sofascore_main()
-    # allSofascoreGamesDict = ingest_softscore_data()
+    allSofascoreGamesDict, allCaesarsGamesDict, allDraftkingsGamesDict, allFanduelGamesDict, allMgmGamesDict, allBetriversGamesDict, allBarstoolsGamesDict, allTwinspiresGamesDict, allUnibetGamesDict = async_payload.thread_pool_executor()
 
-    allSofascoreGamesDict = sofascoreParser.test_full_code('online')
-    allCaesarsGamesDict = caesarsParser.test_full_code("online")  
-    allDraftkingsGamesDict = draftkingsParser.test_full_code("online")
-    allFanduelGamesDict = fanduelParser.test_full_code("online")
-    allMgmGamesDict = mgmParser.test_full_code("online")
-    #get the intersection of two arrays 
+    print(" \n ------- Raw Keys ------- ")
+    print("transplant res sofa", allSofascoreGamesDict.keys())
+    print("transplant res draft", allDraftkingsGamesDict.keys())
+    print("transplant res caesars", allCaesarsGamesDict.keys())
+    print("transplant res fanduel", allFanduelGamesDict.keys())
+    print("transplant res mgm", allMgmGamesDict.keys())
+    print("transplant res betrivers", allBetriversGamesDict.keys())
+    print("transplant res barstools", allBarstoolsGamesDict.keys())
+    print("transplant res twinspires", allTwinspiresGamesDict.keys())
+    print("transplant res unibet", allUnibetGamesDict.keys())
 
     # print()
     caesars_intersection = allSofascoreGamesDict.keys() & allCaesarsGamesDict.keys() 
     draftkings_intersection = allSofascoreGamesDict.keys() & allDraftkingsGamesDict.keys() 
     fanduel_intersection = allSofascoreGamesDict.keys() & allFanduelGamesDict.keys() 
     mgm_intersection = allSofascoreGamesDict.keys() & allMgmGamesDict.keys()
+    betrivers_intersection = allSofascoreGamesDict.keys() & allBetriversGamesDict.keys()
+    barstools_intersection = allSofascoreGamesDict.keys() & allBarstoolsGamesDict.keys()
+    twinspires_intersection = allSofascoreGamesDict.keys() & allTwinspiresGamesDict.keys()
+    unibet_intersection = allSofascoreGamesDict.keys() & allUnibetGamesDict.keys()
 
+    print("\n ------- Game Intersections -------")
     print("Caesars intersection", caesars_intersection)
     print("Draftkings intersection", draftkings_intersection)
     print("Fanduel intersection", fanduel_intersection)
     print("mgm intersection", mgm_intersection)
-    
+    print("betrivers intersection", betrivers_intersection)
+    print("barstools intersection", barstools_intersection)
+    print("twinspires intersection", twinspires_intersection)
+    print("unibet intersection", unibet_intersection)
 
     streamlit_json_payload['analysis'] = {
         "caesars": {},
         "draftkings": {},
         "fanduel": {},
-        "mgm": {}
+        "mgm": {},
+        "betrivers": {},
+        "barstools": {},
+        "twinspires": {},
+        "unibet": {}
     }
 
     def perform_analysis_on_line(sportsbook, intersection, sportsbookGamesDict):
@@ -180,12 +194,18 @@ def main():
     perform_analysis_on_line('draftkings', draftkings_intersection, allDraftkingsGamesDict)
     perform_analysis_on_line('fanduel', fanduel_intersection, allFanduelGamesDict)
     perform_analysis_on_line('mgm', mgm_intersection, allMgmGamesDict)
+    perform_analysis_on_line('betrivers', betrivers_intersection, allBetriversGamesDict)
+    perform_analysis_on_line('barstools', barstools_intersection, allBarstoolsGamesDict)
+    perform_analysis_on_line('twinspires', barstools_intersection, allTwinspiresGamesDict)
+    perform_analysis_on_line('twinspires', barstools_intersection, allUnibetGamesDict)
 
     print("\n============================================")
     print("\nglobal glitches length", len(global_glitches), global_glitches)
     if len(global_glitches) != 0:
         beep.beep(1)
         print("Data saved")
+        file = open("glitch_counter.txt", "w")
+        file.write(f"{timestamp} -> {global_glitches}\n")
         # utils.send_email(global_glitches)
     
     # NO GAME LINE ANALYSIS
@@ -205,6 +225,10 @@ def main():
     display_gameline_expander("draftkings", allDraftkingsGamesDict)
     display_gameline_expander("fanduel", allFanduelGamesDict)
     display_gameline_expander("mgm", allMgmGamesDict)
+    display_gameline_expander("betrivers", allBetriversGamesDict)
+    display_gameline_expander("barstools", allBarstoolsGamesDict)
+    display_gameline_expander("twinspires", allTwinspiresGamesDict)
+    display_gameline_expander("unibet", allUnibetGamesDict)
 
     """
     Standardizing all game data underneath this
@@ -216,12 +240,21 @@ def main():
     streamlit_json_payload['game_names']['draftkings_games'] = list(allDraftkingsGamesDict.keys())
     streamlit_json_payload['game_names']['fanduel_games'] = list(allFanduelGamesDict.keys())
     streamlit_json_payload['game_names']['mgm_games'] = list(allMgmGamesDict.keys())
+    streamlit_json_payload['game_names']['betrivers_games'] = list(allBetriversGamesDict.keys())
+    streamlit_json_payload['game_names']['barstools_games'] = list(allBarstoolsGamesDict.keys())
+    streamlit_json_payload['game_names']['twinspires_games'] = list(allTwinspiresGamesDict.keys())
+    streamlit_json_payload['game_names']['unibet_games'] = list(allUnibetGamesDict.keys())
     
+
     streamlit_json_payload['intersection'] = {}
     streamlit_json_payload['intersection']['caesars_games'] = list(caesars_intersection)
     streamlit_json_payload['intersection']['draftkings_games'] = list(draftkings_intersection)
     streamlit_json_payload['intersection']['fanduel_games'] = list(fanduel_intersection)
     streamlit_json_payload['intersection']['mgm_games'] = list(mgm_intersection)
+    streamlit_json_payload['intersection']['betrivers_games'] = list(betrivers_intersection)
+    streamlit_json_payload['intersection']['barstools_games'] = list(barstools_intersection)
+    streamlit_json_payload['intersection']['twinspires_games'] = list(twinspires_intersection)
+    streamlit_json_payload['intersection']['unibet_games'] = list(unibet_intersection)
     streamlit_json_payload['global_glitches'] = global_glitches
 
     with open('latest_streamlit_json_payload.json', 'w') as f:

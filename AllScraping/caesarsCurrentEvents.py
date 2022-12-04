@@ -66,6 +66,7 @@ async def async_get_event_data(session, event_id):
         ans[event_id]['json'] = response_json
 
 def async_caesars_main():
+    print(" /////////// CAESARS ////////////////")
     timestamp = datetime.now(pytz.timezone('US/Eastern')).strftime("%Y_%m_%d %H:%M:%S")
     start_time = time.time()
     event_ids = get_tennis_events()

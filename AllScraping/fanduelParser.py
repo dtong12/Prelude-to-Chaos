@@ -5,25 +5,6 @@ from datetime import timedelta
 import re
 
 
-"""
-['set', 'game', 'winner'] Set 2 Game 6 Winner
-['total', 'match', 'games'] Total Match Games 25.5
-['game', 'spread'] Game Spread
-['set', 'game', 'handicap'] Set 2 Game Handicap -3.5
-['correct', 'score', 'set'] Correct Score 2nd Set
-['total', 'tie', 'breaks'] Total Tie Breaks 1.5
-['set', 'betting'] Set Betting
-['set', 'game', 'winner'] Set 2 Game 7 Winner
-['moneyline'] Moneyline
-['both', 'players', 'to', 'win', 'a', 'set', '(yesno)'] Both Players to win a Set (Yes/No)
-['correct', 'score', 'set'] Correct Score 3rd Set
-['player', 'a', 'to', 'win', 'at', 'least', 'one', 'set'] Player A to win at least one set
-['total', 'sets'] Total Sets 2.5
-['to', 'win', 'set', 'and', 'win', 'match'] To win 1st set and win match
-event name Kasatkina vs Kalinskaya
-"""
-
-
 class GameLine:
     def __init__(self, line_name, cleaned_line_name, curr_set, curr_game, curr_points, total_points_in_match, total_games_in_match):
         try:
@@ -41,9 +22,8 @@ class GameLine:
 class FanduelGameState:
     def __init__(self, event_json):
         #self.event_name =  self.clean_event_name(list(event_json['json']['attachments']['events'].values())[0]['name'])
-
         try:
-            self.event_name =  self.clean_event_name(list(event_json['json']['attachments']['events'].values())[0]['name'])
+            self.event_name = self.clean_event_name(list(event_json['json']['attachments']['events'].values())[0]['name'])
             self.event_json = event_json
             self.game_lines = {}
             self.get_game_lines()

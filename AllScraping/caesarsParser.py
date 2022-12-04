@@ -68,7 +68,8 @@ class CaesarsGameState:
         for market in self.event_json['json']['markets']:
             caesars_stripped_line_name = self.strip_game_line(market['name'])
             # print("ALL LINES", market['name'], market['display'], market['active'])
-            if caesars_stripped_line_name in profiles and market['display'] and market['active']:
+            # if caesars_stripped_line_name in profiles and market['display'] and market['active']:
+            if market['display'] and market['active']:
                 print("Viable game line MATCH", caesars_stripped_line_name, "-> ", market['name'])
                 if caesars_stripped_line_name == ['set', 'winner', 'live']: 
                    self.game_lines[market['name']] = (self.set_winner_live(market['name']))
@@ -76,8 +77,13 @@ class CaesarsGameState:
                     self.game_lines[market['name']] = (self.set_game_live(market['name']))
                 elif caesars_stripped_line_name == ['set', 'game']:
                     self.game_lines[market['name']] = (self.set_game(market['name']))
+                elif caesars_stripped_line_name == ['set', 'game', 'correct', 'score']:
+                    self.game_lines[market['name']] = (self.set_game_correct_score(market['name']))
+                else:
+                    print("remaining -> ", caesars_stripped_line_name, market['name'])
             else:
-                 print("remaining -> ", caesars_stripped_line_name, market['name'])
+                pass
+                #print("caesars inactive lines -> ", caesars_stripped_line_name, market['name'])
         print('\n')
     def set_winner_live(self, caesars_raw_name):
         cleaned_caesars_name_array = caesars_raw_name.replace("|", "").replace("-", "").split()
@@ -99,7 +105,14 @@ class CaesarsGameState:
         curr_game = int(cleaned_caesars_name_array[-1])
         #print("raw name:", caesars_raw_name, "extracted curr_game", curr_game)
         return GameLine(line_name = caesars_raw_name, cleaned_line_name= None, curr_set= curr_set, curr_game = curr_game, curr_points = None, total_points_in_match= None, total_games_in_match= None)
-
+    
+    def set_game_correct_score(self, caesars_raw_name):
+        
+        print("SET GAME CORRECT SCORE TRIGGERED")
+        cleaned_caesars_name_array = caesars_raw_name.replace("|", "").replace("-", "").split()
+        curr_set = int(cleaned_caesars_name_array[0][0])
+        # print(("SET GAME CORRECT SCORE", curr_set))
+        pass
 
 class GameLine:
     def __init__(self, line_name, cleaned_line_name, curr_set, curr_game, curr_points, total_points_in_match, total_games_in_match):
